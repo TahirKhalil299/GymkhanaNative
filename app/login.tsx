@@ -10,7 +10,6 @@ const STORAGE_KEYS = {
   savedUserId: 'savedUserId',
   savedPassword: 'savedPassword',
   userId: 'userId',
-  waiterId: 'waiter_id',
 } as const;
 
 export default function LoginScreen() {
@@ -76,12 +75,6 @@ export default function LoginScreen() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     await SecureStore.setItemAsync(STORAGE_KEYS.isLoggedIn, 'true');
     await SecureStore.setItemAsync(STORAGE_KEYS.userId, uid);
-    // If Staff selected, keep Staff ID as waiter_id for later prefill
-    try {
-      if (accountType === 'Staff') {
-        await SecureStore.setItemAsync(STORAGE_KEYS.waiterId, uid);
-      }
-    } catch {}
     if (rememberMe) {
       await SecureStore.setItemAsync(STORAGE_KEYS.savedUserId, uid);
       await SecureStore.setItemAsync(STORAGE_KEYS.savedPassword, pwd);
@@ -89,7 +82,7 @@ export default function LoginScreen() {
       await SecureStore.deleteItemAsync(STORAGE_KEYS.savedUserId);
       await SecureStore.deleteItemAsync(STORAGE_KEYS.savedPassword);
     }
-  }, [accountType, rememberMe]);
+  }, [rememberMe]);
 
   const onLogin = useCallback(async () => {
     setEmailError(null);
@@ -108,7 +101,7 @@ export default function LoginScreen() {
     try {
       await simulateLogin(userId.trim(), password.trim());
       router.replace('/select_outlet');
-    } catch (err) {
+    } catch  {
       Alert.alert('Login failed', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -130,11 +123,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
         <View style={styles.contentWrapper}>
-          <Text style={styles.headline}>
-            Sign in to Your{"\n"}
-            GymKhana{"\n"}
-            Account
-          </Text>
+          <Text style={styles.headline}>Sign In to Your GymKhana Account</Text>
 
           {/* Member/Staff selector (red theme) */}
           <View style={styles.roleToggleContainer}>
@@ -268,7 +257,6 @@ const styles = StyleSheet.create({
     lineHeight: 34,
     fontWeight: '800',
     color: '#1f2937',
-    marginBottom: 8,
   },
   inputWrapper: {
     marginTop: 10,
@@ -306,7 +294,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 2,
     marginTop: 14,
-    marginBottom: 14,
   },
   roleToggleItem: {
     flex: 1,

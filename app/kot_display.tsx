@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OrderData = {
   orderNumber: string;
@@ -14,12 +14,12 @@ type OrderData = {
   tableNo: string;
   waiterId: string;
   waiterName: string;
-  cartItems: Array<{
+  cartItems: {
     id: number;
     name: string;
     price: number;
     quantity: number;
-  }>;
+  }[];
   grandTotal: number;
   itemCount: number;
   timestamp: string;
@@ -27,7 +27,6 @@ type OrderData = {
 };
 
 export default function KotDisplayScreen() {
-  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);

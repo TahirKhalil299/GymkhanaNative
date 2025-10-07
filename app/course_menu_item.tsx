@@ -14,6 +14,8 @@ type Params = {
   member_name?: string;
   table_no?: string;
   order_type?: string;
+  waiter_id?: string;
+  waiter_name?: string;
   cart_total?: string;
   cart_count?: string;
   cart_items?: string;
@@ -30,6 +32,8 @@ export default function CourseMenuScreen() {
   const memberName = params.member_name ?? '';
   const tableNo = params.table_no ?? '';
   const orderType = params.order_type ?? '';
+  const waiterId = params.waiter_id ?? '';
+  const waiterName = params.waiter_name ?? '';
 
   // Mock courses data (replace when API available)
   const courses: Course[] = useMemo(() => getSampleCourses(), []);

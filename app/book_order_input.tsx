@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type MemberType = 'Club Member' | 'Guest' | 'Affiliated Club' | '';
@@ -181,9 +181,10 @@ export default function BookOrderInputScreen() {
                 placeholderTextColor="#9CA3AF"
                 style={styles.input}
                 keyboardType="number-pad"
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => leftRef.current?.focus()}
+                returnKeyType="done"
+                blurOnSubmit={true}
+                enterKeyHint="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
                />
             </View>
             <View style={[styles.inputWrap, styles.tableFieldWrap, { marginLeft: 8 }]}> 
@@ -274,8 +275,7 @@ export default function BookOrderInputScreen() {
                   pax,
                   member_name: rightField,
                   table_no: tableNo,
-                  waiter_id: waiterId,
-                  waiter_name: waiterName,
+                  order_type: orderType,
                 },
               });
             }}
