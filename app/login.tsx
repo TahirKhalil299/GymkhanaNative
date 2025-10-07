@@ -1,8 +1,8 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { ActivityIndicator, Alert, Animated, Easing, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const STORAGE_KEYS = {
   isLoggedIn: 'isLoggedIn',
@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   savedUserId: 'savedUserId',
   savedPassword: 'savedPassword',
   userId: 'userId',
+  waiterId: 'waiter_id',
 } as const;
 
 export default function LoginScreen() {
@@ -20,6 +21,7 @@ export default function LoginScreen() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [accountType, setAccountType] = useState<'Member' | 'Staff'>('Member');
 
   const validateUserId = useCallback((value: string) => {
     if (!value || value.trim().length === 0) return 'User ID cannot be empty';
@@ -74,6 +76,12 @@ export default function LoginScreen() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     await SecureStore.setItemAsync(STORAGE_KEYS.isLoggedIn, 'true');
     await SecureStore.setItemAsync(STORAGE_KEYS.userId, uid);
+    // If Staff selected, keep Staff ID as waiter_id for later prefill
+    try {
+      if (accountType === 'Staff') {
+        await SecureStore.setItemAsync(STORAGE_KEYS.waiterId, uid);
+      }
+    } catch {}
     if (rememberMe) {
       await SecureStore.setItemAsync(STORAGE_KEYS.savedUserId, uid);
       await SecureStore.setItemAsync(STORAGE_KEYS.savedPassword, pwd);
@@ -81,7 +89,7 @@ export default function LoginScreen() {
       await SecureStore.deleteItemAsync(STORAGE_KEYS.savedUserId);
       await SecureStore.deleteItemAsync(STORAGE_KEYS.savedPassword);
     }
-  }, [rememberMe]);
+  }, [accountType, rememberMe]);
 
   const onLogin = useCallback(async () => {
     setEmailError(null);
@@ -111,59 +119,80 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.root}>
-      <Image source={require('../assets/images/android-icon-background.png')} style={styles.background} resizeMode="cover" />
+      {/* Top hero image */}
+      <Image source={require('../assets/images/android-icon-background.png')} style={styles.hero} resizeMode="cover" />
 
-      <View style={styles.contentWrapper}>
-        <Image source={require('../assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
+      {/* Bottom sheet container */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0} style={styles.bottomSheet}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+        <View style={styles.contentWrapper}>
+          <Text style={styles.headline}>
+            Sign in to Your{"\n"}
+            GymKhana{"\n"}
+            Account
+          </Text>
 
-        <Text style={styles.welcome}>Welcome back,</Text>
-        <Text style={styles.loginTitle}>Log In</Text>
+          {/* Member/Staff selector (red theme) */}
+          <View style={styles.roleToggleContainer}>
+            <Pressable
+              onPress={() => setAccountType('Member')}
+              style={[styles.roleToggleItem, accountType === 'Member' && styles.roleToggleItemSelected]}
+            >
+              <Text style={[styles.roleToggleText, accountType === 'Member' && styles.roleToggleTextSelected]}>Member</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setAccountType('Staff')}
+              style={[styles.roleToggleItem, accountType === 'Staff' && styles.roleToggleItemSelected]}
+            >
+              <Text style={[styles.roleToggleText, accountType === 'Staff' && styles.roleToggleTextSelected]}>Staff</Text>
+            </Pressable>
+          </View>
 
-        <FloatingLabelInput
-          label="Enter user ID"
-          value={userId}
-          onChangeText={setUserId}
-          leftIcon="person"
-          errorText={emailError ?? undefined}
-          autoCapitalize="none"
-        />
+          <FloatingLabelInput
+            label={accountType === 'Staff' ? 'Staff Id*' : 'Member Id*'}
+            value={userId}
+            onChangeText={setUserId}
+            leftIcon="person"
+            errorText={emailError ?? undefined}
+            autoCapitalize="none"
+          />
 
-        <FloatingLabelInput
-          label="Enter password"
-          value={password}
-          onChangeText={setPassword}
-          leftIcon="lock"
-          rightIconToggle={true}
-          secureEntry={!showPassword}
-          onToggleSecure={() => setShowPassword(s => !s)}
-          errorText={passwordError ?? undefined}
-        />
+          <FloatingLabelInput
+            label="Password*"
+            value={password}
+            onChangeText={setPassword}
+            leftIcon="lock"
+            rightIconToggle={true}
+            secureEntry={!showPassword}
+            onToggleSecure={() => setShowPassword(s => !s)}
+            errorText={passwordError ?? undefined}
+          />
 
-        {/* Biometric toggle hidden to match Android layout (visibility="gone") */}
-        <View style={styles.hiddenRow}>
-          <Text style={styles.biometricText}>Enable Biometric Login</Text>
-          <View style={styles.switchPlaceholder} />
-        </View>
+          {/* Keep me Logged-In */}
+          <View style={styles.rememberRow}>
+            <Pressable onPress={onToggleRemember} style={styles.checkboxRow}>
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
+              <Text style={styles.checkboxLabel}>Keep me Logged-In</Text>
+            </Pressable>
+          </View>
 
-        <View style={styles.buttonsRow}>
-          <TouchableOpacity disabled={!canSubmit} onPress={onLogin} style={[styles.primaryButton, !canSubmit && styles.disabledButton]}>
-            <Text style={styles.primaryButtonText}>Log In</Text>
-          </TouchableOpacity>
-          {/* Sign Up is hidden in original layout */}
-        </View>
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity disabled={!canSubmit} onPress={onLogin} style={[styles.primaryButton, !canSubmit && styles.disabledButton]}>
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+              <MaterialIcons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+          </View>
 
-        {/* Remember Me hidden in layout but kept for behavior */}
-        <View style={styles.hiddenRow}>
-          <Pressable onPress={onToggleRemember} style={styles.checkboxRow}>
-            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
-            <Text style={styles.checkboxLabel}>Remember Me</Text>
+          <Pressable onPress={() => { /* optional forgot password */ }} style={styles.forgotRow}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
           </Pressable>
         </View>
-
-        <Pressable onPress={() => { /* optional forgot password */ }} style={styles.forgotRow}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
-        </Pressable>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {loading && (
         <View style={styles.overlay}>
@@ -187,16 +216,39 @@ const styles = StyleSheet.create({
     bottom: 0,
     opacity: 0.06,
   },
+  hero: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+  },
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    top: '28%',
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: -2 },
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   contentWrapper: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 48,
+    paddingTop: 24,
   },
   logo: {
-    width: 130,
-    height: 90,
-    alignSelf: 'flex-start',
-    marginTop: 8,
+    width: 0,
+    height: 0,
   },
   welcome: {
     marginTop: 24,
@@ -209,6 +261,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#1f2937',
+  },
+  headline: {
+    marginTop: 12,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   inputWrapper: {
     marginTop: 10,
@@ -238,12 +298,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
+  roleToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FF5722',
+    borderRadius: 10,
+    padding: 2,
+    marginTop: 14,
+    marginBottom: 14,
+  },
+  roleToggleItem: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  roleToggleItemSelected: {
+    backgroundColor: '#FF5722',
+  },
+  roleToggleText: {
+    color: '#FF5722',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  roleToggleTextSelected: {
+    color: '#ffffff',
+  },
   primaryButton: {
     flex: 1,
     backgroundColor: '#FF5722',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   disabledButton: {
     opacity: 0.7,
@@ -271,6 +361,11 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     color: '#1f2937',
+  },
+  rememberRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   forgotRow: {
     marginTop: 16,

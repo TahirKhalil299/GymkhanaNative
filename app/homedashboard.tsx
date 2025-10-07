@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SelectMemberDialog from './selectMemberDialog';
+
 
 const STORAGE = {
   selectedLocation: 'selectedLocation',
@@ -19,6 +21,7 @@ export default function HomeDashboardScreen() {
   const [location, setLocation] = useState('');
   const [outlet, setOutlet] = useState('');
   const [year, setYear] = useState('');
+  const [showMemberDialog, setShowMemberDialog] = useState(false);
 
   const load = async () => {
     const [uid, loc, out, fy] = await Promise.all([
@@ -86,7 +89,7 @@ export default function HomeDashboardScreen() {
           iconName="fact-check"
           title="Book Order"
           titleColor="#87C06B"
-          onPress={() => Alert.alert('Book Order', 'Implement navigation to Book Order screen.')}
+          onPress={() => setShowMemberDialog(true)}
         />
 
         <DashboardCard
@@ -95,7 +98,7 @@ export default function HomeDashboardScreen() {
           iconName="assignment"
           title="Order Details"
           titleColor="#EF6D6E"
-          onPress={() => Alert.alert('Order Details', 'Implement navigation to Order List screen.')}
+          onPress={() => router.push('/order_details' as any)}
         />
 
         <DashboardCard
@@ -104,9 +107,35 @@ export default function HomeDashboardScreen() {
           iconName="kitchen"
           title="Kitchen Display System"
           titleColor="#4798E8"
-          onPress={() => Alert.alert('KDS', 'Implement navigation to KDS screen.')}
+          onPress={() => router.push('/kot_display')}
         />
       </ScrollView>
+
+      <SelectMemberDialog
+        visible={showMemberDialog}
+        title="Member Info"
+        onRequestClose={() => setShowMemberDialog(false)}
+        onCancelClick={() => setShowMemberDialog(false)}
+        onConfirmClick={(payload) => {
+          setShowMemberDialog(false);
+          router.push({
+            pathname: '/book_order_input',
+            params: {
+              member_type: payload.memberType,
+              member_id: payload.membershipId,
+              order_type: payload.orderType,
+              guest_name: payload.guestName ?? '',
+              member_name: payload.memberName ?? '',
+              member_detail: payload.memberDetail ?? '',
+            },
+          });
+        }}
+        isOutsideClickable={true}
+        isBackPressEnabled={true}
+        showCancelButton={false}
+        showConfirmButton={true}
+        confirmButtonText="OK"
+      />
     </SafeAreaView>
   );
 }

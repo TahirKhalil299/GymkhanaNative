@@ -15,8 +15,10 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ title: 'Login', headerShown: false }} />
         <Stack.Screen name="select_outlet" options={{ title: 'Select Outlet', headerShown: false }} />
         <Stack.Screen name="homedashboard" options={{ title: 'Home', headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="book_order_input" options={{ title: 'Book Order', headerShown: false }} />
+        <Stack.Screen name="course_menu_item" options={{ title: 'Course Menu', headerShown: false }} />
+
+
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
