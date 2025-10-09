@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -190,6 +191,29 @@ export default function CartScreen() {
           style={[styles.checkoutBtn, cartItems.length === 0 ? styles.checkoutBtnDisabled : undefined]}
           onPress={async () => {
             try {
+              // Resolve current outlet name from storage
+              let outletName = '';
+              try {
+                const s1 = await SecureStore.getItemAsync('selectedOutlet');
+                if (s1) outletName = s1;
+              } catch {}
+              if (!outletName) {
+                try {
+                  const a1 = await AsyncStorage.getItem('selected_outlet_name');
+                  const a2 = await AsyncStorage.getItem('selectedOutlet');
+                  const a3 = await AsyncStorage.getItem('selected_outlet');
+                  const raw = a1 || a2 || a3 || '';
+                  if (raw) {
+                    try {
+                      const parsed = JSON.parse(raw as string);
+                      outletName = parsed?.name || parsed?.outletName || parsed || '';
+                    } catch {
+                      outletName = raw as string;
+                    }
+                  }
+                } catch {}
+              }
+
               const orderData = {
                 orderNumber: params.order_number ?? '',
                 memberId: params.member_id ?? '',
@@ -204,7 +228,8 @@ export default function CartScreen() {
                 grandTotal: grandTotal,
                 itemCount: itemCount,
                 timestamp: new Date().toISOString(),
-                status: 'Pending'
+                status: 'Pending',
+                outletName: outletName
               };
               
               // Get existing orders

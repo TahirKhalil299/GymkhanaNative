@@ -98,7 +98,7 @@ export default function HomeDashboardScreen() {
           iconName="assignment"
           title="Order Details"
           titleColor="#EF6D6E"
-          onPress={() => router.push('/order_details' as any)}
+          onPress={() => router.push('/order_list')}
         />
 
         <DashboardCard

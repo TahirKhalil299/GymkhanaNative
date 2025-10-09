@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, Stack, useFocusEffect } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OrderData = {
@@ -25,6 +26,7 @@ type OrderData = {
   itemCount: number;
   timestamp: string;
   status: string;
+  outletName?: string;
 };
 
 export default function KotDisplayScreen() {
@@ -41,7 +43,13 @@ export default function KotDisplayScreen() {
         const v1 = await AsyncStorage.getItem('selected_outlet');
         const v2 = await AsyncStorage.getItem('selectedOutlet');
         const v3 = await AsyncStorage.getItem('selected_outlet_name');
-        const v = v3 || v2 || v1;
+        let v = v3 || v2 || v1;
+        // Also check secure storage where Select Outlet screen saves it
+        if (!v) {
+          try {
+            v = await SecureStore.getItemAsync('selectedOutlet');
+          } catch {}
+        }
         if (v) {
           try {
             const parsed = JSON.parse(v);
@@ -133,16 +141,18 @@ export default function KotDisplayScreen() {
       );
       setOrders(pendingOrders);
       
-      // Close the dialog
+      // Close the dialog; do not navigate away
       closeOrderDialog();
-      
-      // Navigate to order details screen
-      router.push({
-        pathname: '/order_details',
-        params: { orderNumber: order.orderNumber }
-      });
     } catch (error) {
       console.error('Error processing order:', error);
+    }
+  };
+
+  const getTotalQuantity = (items: OrderData['cartItems']) => {
+    try {
+      return items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+    } catch {
+      return items?.length || 0;
     }
   };
 
@@ -156,10 +166,10 @@ export default function KotDisplayScreen() {
       <Text style={styles.orderDate}>{formatDate(item.timestamp)}</Text>
       <View style={styles.tagsContainer}>
         <View style={styles.tag}>
-          <Text style={styles.tagText}>Table {item.tableNo}</Text>
+          <Text style={styles.tagText}> {item.tableNo}</Text>
         </View> 
         <View style={styles.tag}>
-          <Text style={styles.tagText}>Coffee Shop</Text>
+          <Text style={styles.tagText}>{item.outletName || 'Outlet'}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -173,7 +183,7 @@ export default function KotDisplayScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>KOT Display</Text>
+        <Text style={styles.headerTitle}>KOT Display{outletName ? ` - ${outletName}` : ''}</Text>
       </View>
 
      
@@ -195,95 +205,98 @@ export default function KotDisplayScreen() {
          />
        )}
 
-       <Modal
-         visible={showOrderDialog}
-         transparent={true}
-         animationType="fade"
-         onRequestClose={closeOrderDialog}
-       >
-         <View style={styles.modalOverlay}>
-          <View style={styles.dialogContainer}>
+      <Modal
+        visible={showOrderDialog}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeOrderDialog}
+      >
+        <TouchableWithoutFeedback onPress={closeOrderDialog}>
+          <View style={styles.modalOverlay} pointerEvents="box-none">
+           <View 
+             style={styles.dialogContainer} 
+             onStartShouldSetResponder={() => true}
+             onMoveShouldSetResponderCapture={() => true}
+           >
             <View style={styles.dialogHeader}>
               <Text style={styles.dialogTitle}>Order Details</Text>
-               <TouchableOpacity onPress={closeOrderDialog} style={styles.closeBtn}>
+              {selectedOrder && (
+                <View style={[styles.servicePill, selectedOrder.serviceType === 'DINING_IN' ? styles.serviceDining : styles.serviceTakeaway]}>
+                  <Text style={styles.serviceText}>{selectedOrder.serviceType === 'DINING_IN' ? 'DiningIn' : 'TakeAway'}</Text>
+                </View>
+              )}
+              <TouchableOpacity onPress={closeOrderDialog} style={styles.closeBtn}>
                  <Ionicons name="close" size={24} color="#000000" />
                </TouchableOpacity>
              </View>
 
              <View style={styles.dialogContent}>
-              {/* Row 1: Order No  |  Shop */}
+              {/* Row 1: Order No  |  Outlet */}
               <View style={styles.orderInfoRow}>
                 <View style={styles.orderIdField}>
                   <Text style={styles.orderIdText}>{selectedOrder?.orderNumber}</Text>
                 </View>
-                <View style={styles.venueField}>
-                  <Text style={styles.venueText}>{outletName || 'Coffee Shop'}</Text>
+                <View style={styles.venueFieldPlain}>
+                  <Text style={styles.venueText}>{selectedOrder?.outletName || 'Outlet'}</Text>
                 </View>
               </View>
 
               {/* Row 2: Table No  |  Date & time */}
               <View style={[styles.orderInfoRow, { alignItems: 'center' }]}>
                 <View style={styles.orderIdField}>
-                  <Text style={styles.orderIdText}>{`Table ${selectedOrder?.tableNo ?? ''}`}</Text>
+                  <Text style={styles.orderIdText}>{` ${selectedOrder?.tableNo ?? ''}`}</Text>
                 </View>
                 <View style={[styles.venueField, { backgroundColor: '#F3F4F6' }]}>
-                  <Text style={styles.venueText}>{selectedOrder ? formatDate(selectedOrder.timestamp) : ''}</Text>
+                  <Text style={[styles.venueText, { color: '#374151' }]}>{selectedOrder ? formatDate(selectedOrder.timestamp) : ''}</Text>
                 </View>
               </View>
 
-              {/* Row 3: Service Type */}
-              <View style={[styles.orderInfoRow, { marginTop: 4 }]}> 
-                <View style={[styles.venueField, { backgroundColor: '#E5E7EB' }]}> 
-                  <Text style={styles.venueText}>{selectedOrder?.serviceType === 'DINING_IN' ? 'DiningIn' : 'TakeAway'}</Text>
-                </View>
-              </View>
+              {/* Service type moved next to the title in header */}
 
               <View style={styles.orderItemsSection}>
                 <Text style={styles.orderItemsTitle}>Order Items</Text>
-                <Text style={styles.orderItemsCount}>{selectedOrder?.cartItems.length}x</Text>
+                <Text style={styles.orderItemsCount}>{selectedOrder ? getTotalQuantity(selectedOrder.cartItems) : 0}x</Text>
               </View>
 
-              <ScrollView 
-                style={styles.itemsScrollView}
+              <View style={styles.itemsWrapper}>
+              <FlatList
+                data={selectedOrder ? selectedOrder.cartItems : []}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
+                renderItem={({ item }) => (
+                  <View style={styles.orderItem}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemQuantity}>{item.quantity}x</Text>
+                  </View>
+                )}
+                style={styles.itemsList}
                 showsVerticalScrollIndicator={selectedOrder ? selectedOrder.cartItems.length > 4 : false}
-                 scrollEnabled={true}
-                 nestedScrollEnabled={true}
-                 bounces={true}
-                 alwaysBounceVertical={false}
-                 contentContainerStyle={styles.itemsContainer}
-               >
-                 {selectedOrder?.cartItems.map((item, index) => (
-                   <View key={index} style={styles.orderItem}>
-                     <Text style={styles.itemName}>{item.name}</Text>
-                     <Text style={styles.itemQuantity}>{item.quantity}x</Text>
-                   </View>
-                 ))}
-                 
-                 {selectedOrder && selectedOrder.cartItems.length > 4 && (
-                   <View style={styles.scrollIndicator}>
-                     <Ionicons name="chevron-down" size={20} color="#6B7280" />
-                     <Text style={styles.scrollText}>Scroll for more items</Text>
-                   </View>
-                 )}
-               </ScrollView>
+                scrollEnabled={true}
+                nestedScrollEnabled={true}
+                bounces={true}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.itemsContent}
+                removeClippedSubviews={true}
+              />
+              </View>
 
                <View style={styles.actionButtons}>
                  <TouchableOpacity 
-                   style={styles.actionBtn} 
+                   style={[styles.actionBtn, styles.actionBtnGreen]} 
                    onPress={() => selectedOrder && handleTickPress(selectedOrder)}
                  >
-                   <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                   <Ionicons name="checkmark" size={24} color="#FFFFFF" />
                  </TouchableOpacity>
-                 <TouchableOpacity style={styles.actionBtn} onPress={() => {}}>
-                   <Ionicons name="close-circle" size={24} color="#EF4444" />
+                 <TouchableOpacity style={[styles.actionBtn, styles.actionBtnRed]} onPress={() => {}}>
+                   <Ionicons name="close" size={24} color="#FFFFFF" />
                  </TouchableOpacity>
-                 <TouchableOpacity style={styles.actionBtn} onPress={() => {}}>
-                   <Ionicons name="print" size={24} color="#6B7280" />
+                 <TouchableOpacity style={[styles.actionBtn, styles.actionBtnGray]} onPress={() => {}}>
+                   <Ionicons name="print" size={22} color="#FFFFFF" />
                  </TouchableOpacity>
                </View>
              </View>
            </View>
          </View>
+        </TouchableWithoutFeedback>
        </Modal>
      </SafeAreaView>
    );
@@ -357,18 +370,20 @@ const styles = StyleSheet.create({
   dialogContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    width: '92%',
-    maxHeight: '80%',
+    width: '96%',
+    maxWidth: 480,
+    maxHeight: '86%',
     elevation: 8,
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   dialogHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -379,15 +394,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    flex: 1,
+    flexShrink: 1,
+    marginRight: 4,
   },
   closeBtn: {
     padding: 4,
+    marginLeft: 'auto',
   },
   dialogContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  rowCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   orderInfoRow: {
     flexDirection: 'row',
     marginBottom: 12,
@@ -409,8 +427,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  venueFieldPlain: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 6,
   },
+  outletPill: { backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20 },
   venueText: {
     color: '#374151',
     fontSize: 14,
@@ -422,27 +450,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'right',
   },
-  orderItemsSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  orderItemsSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   orderItemsTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
   },
-  orderItemsCount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  itemsScrollView: { maxHeight: 200, marginBottom: 16 },
-  itemsContainer: {
-    paddingBottom: 8,
-    flexGrow: 1,
-  },
+  itemsBadge: { display: 'none' },
+  orderItemsCount: { fontSize: 13, fontWeight: '800', color: '#374151' },
+  servicePill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
+  serviceDining: { backgroundColor: '#3B82F6' },
+  serviceTakeaway: { backgroundColor: '#EF4444' },
+  serviceText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
+  itemsWrapper: { maxHeight: 340 },
+  itemsList: { maxHeight: 340, marginBottom: 16 },
+  itemsContent: { paddingBottom: 8, paddingTop: 2 },
   orderItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -474,17 +496,33 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     paddingTop: 16,
+    paddingRight: 4,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
+    gap: 12,
   },
   actionBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F3F4F6',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  actionBtnGreen: {
+    backgroundColor: '#10B981',
+  },
+  actionBtnRed: {
+    backgroundColor: '#EF4444',
+  },
+  actionBtnGray: {
+    backgroundColor: '#9CA3AF',
   },
 });
