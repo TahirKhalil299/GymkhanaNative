@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, FlatList, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const STORAGE = {
@@ -57,6 +57,7 @@ export default function SelectOutletScreen() {
   const [financialYear, setFinancialYear] = useState(FY_OPTIONS[0]);
   const [lastLogoutTime, setLastLogoutTime] = useState('Never logged out');
   const [loading, setLoading] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const buttonShake = useRef(new Animated.Value(0)).current;
 
@@ -125,7 +126,8 @@ export default function SelectOutletScreen() {
   return (
     <SafeAreaView style={styles.scaffold} edges={['top','left','right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
+      <TouchableWithoutFeedback onPress={() => setOpenDropdown(null)}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={styles.topBar}>
           {!isFromDashboard ? (
             <View />
@@ -157,13 +159,37 @@ export default function SelectOutletScreen() {
 
         <View style={styles.cardWhite}>
           <Text style={styles.fieldLabel}>Location</Text>
-          <Dropdown value={location} onChange={setLocation} options={LOCATION_OPTIONS} placeholder="Select Location" />
+          <Dropdown 
+            id="location"
+            value={location} 
+            onChange={setLocation} 
+            options={LOCATION_OPTIONS} 
+            placeholder="Select Location"
+            openDropdown={openDropdown}
+            setOpenDropdown={setOpenDropdown}
+          />
 
           <Text style={[styles.fieldLabel, { marginTop: 24 }]}>Outlet</Text>
-          <Dropdown value={outlet} onChange={setOutlet} options={OUTLET_OPTIONS} placeholder="---Please Select---" />
+          <Dropdown 
+            id="outlet"
+            value={outlet} 
+            onChange={setOutlet} 
+            options={OUTLET_OPTIONS} 
+            placeholder="---Please Select---"
+            openDropdown={openDropdown}
+            setOpenDropdown={setOpenDropdown}
+          />
 
           <Text style={[styles.fieldLabel, { marginTop: 24 }]}>Financial Year</Text>
-          <Dropdown value={financialYear} onChange={setFinancialYear} options={FY_OPTIONS} placeholder="FY 2024 - 2025" />
+          <Dropdown 
+            id="financialYear"
+            value={financialYear} 
+            onChange={setFinancialYear} 
+            options={FY_OPTIONS} 
+            placeholder="FY 2024 - 2025"
+            openDropdown={openDropdown}
+            setOpenDropdown={setOpenDropdown}
+          />
 
           <Animated.View style={{ transform: [{ translateX: buttonShake }] }}>
             <TouchableOpacity disabled={loading} style={styles.continueBtn} onPress={onContinue}>
@@ -171,39 +197,63 @@ export default function SelectOutletScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
 
-type DropdownProps = { value: string; onChange: (v: string) => void; options: string[]; placeholder: string };
+type DropdownProps = { 
+  id: string;
+  value: string; 
+  onChange: (v: string) => void; 
+  options: string[]; 
+  placeholder: string;
+  openDropdown: string | null;
+  setOpenDropdown: (id: string | null) => void;
+};
 
-function Dropdown({ value, onChange, options, placeholder }: DropdownProps) {
-  const [open, setOpen] = useState(false);
+function Dropdown({ id, value, onChange, options, placeholder, openDropdown, setOpenDropdown }: DropdownProps) {
+  const isOpen = openDropdown === id;
   const selected = value || '';
+  
+  const handleToggle = () => {
+    if (isOpen) {
+      setOpenDropdown(null);
+    } else {
+      setOpenDropdown(id);
+    }
+  };
+
+  const handleSelect = (item: string) => {
+    onChange(item);
+    setOpenDropdown(null);
+  };
+
   return (
     <View style={styles.dropdownRoot}>
       <TouchableOpacity
         style={styles.dropdownField}
         activeOpacity={0.8}
-        onPress={() => setOpen(o => !o)}
+        onPress={handleToggle}
       >
         <Text style={selected ? styles.dropdownText : styles.dropdownPlaceholder}>
           {selected || placeholder}
         </Text>
       </TouchableOpacity>
-      {open && (
+      {isOpen && (
         <View style={styles.dropdownList}>
-          <FlatList
-            data={options}
-            keyExtractor={(item, idx) => `${item}-${idx}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { onChange(item); setOpen(false); }}>
+          <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+            {options.map((item, idx) => (
+              <TouchableOpacity 
+                key={`${item}-${idx}`}
+                style={styles.dropdownItem} 
+                onPress={() => handleSelect(item)}
+              >
                 <Text style={styles.dropdownItemText}>{item}</Text>
               </TouchableOpacity>
-            )}
-            style={{ maxHeight: 220 }}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>

@@ -2,7 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type MemberType = 'Club Member' | 'Guest' | 'Affiliated Club' | '';
@@ -31,8 +32,7 @@ export default function BookOrderInputScreen() {
   const tableOptions = useMemo(
     () => [
       'Select Table', 
-      'Table 1', 'Table 2', 'Table 3', 'Table 4'
-    ],
+      'Table 1', 'Table 2', 'Table 3', 'Table 4','Table 5', 'Table 6', 'Table 7', 'Table 8'    ],
     []
   );
   const [showTablePicker, setShowTablePicker] = useState(false);
@@ -47,6 +47,11 @@ export default function BookOrderInputScreen() {
   // Input refs for focusing/opening keyboard
   const paxRef = useRef<TextInput>(null);
   const tableRef = useRef<any>(null);
+  const tableData = useMemo(
+    () => tableOptions.map(opt => ({ label: opt, value: opt })),
+    [tableOptions]
+  );
+
   const leftRef = useRef<TextInput>(null);
   const rightRef = useRef<TextInput>(null);
   const detailsRef = useRef<TextInput>(null);
@@ -189,13 +194,24 @@ export default function BookOrderInputScreen() {
             </View>
             <View style={[styles.inputWrap, styles.tableFieldWrap, { marginLeft: 8 }]}> 
               <Text style={styles.label}>Table No</Text>
-              <DropdownMini
-                value={tableNo}
-                onChange={(v) => { setTableNo(v); setShowTablePicker(false); setTimeout(() => leftRef.current?.focus(), 50); }}
-                options={tableOptions}
+              <Dropdown
+                ref={tableRef}
+                style={styles.dropdownFieldBook}
+                containerStyle={styles.dropdownListBook}
+                data={tableData}
+                labelField="label"
+                valueField="value"
                 placeholder="Select Table"
-                open={showTablePicker}
-                setOpen={(v) => { setShowTablePicker(v); setOuterScrollEnabled(!v); }}
+                value={tableNo}
+                onChange={(item: { label: string; value: string }) => {
+                  setTableNo(item.value);
+                  setTimeout(() => leftRef.current?.focus(), 50);
+                }}
+                onFocus={() => { setShowTablePicker(true); setOuterScrollEnabled(false); }}
+                onBlur={() => { setShowTablePicker(false); setOuterScrollEnabled(true); }}
+                maxHeight={48 * 6}
+                autoScroll
+                showsVerticalScrollIndicator
               />
             </View>
           </View>
@@ -292,54 +308,6 @@ export default function BookOrderInputScreen() {
   );
 }
 
-type MiniProps = { value: string; onChange: (v: string) => void; options: string[]; placeholder: string; open: boolean; setOpen: (v: boolean) => void };
-
-function DropdownMini({ value, onChange, options, placeholder, open, setOpen }: MiniProps) {
-  const selected = value || '';
-  const itemHeight = 48;
-  const maxVisibleItems = 6;
-  const dropdownMaxHeight = itemHeight * maxVisibleItems;
-  
-  return (
-    <View style={styles.dropdownRootMini}>
-      <TouchableOpacity
-        style={styles.dropdownFieldMini}
-        activeOpacity={0.8}
-        onPress={() => setOpen(!open)}
-      >
-        <Text style={selected ? styles.dropdownTextMini : styles.dropdownPlaceholderMini} numberOfLines={1}>
-          {selected || placeholder}
-        </Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color="#6B7280" />
-      </TouchableOpacity>
-      {open && (
-        <View style={[styles.dropdownListMini, { maxHeight: dropdownMaxHeight }]}>
-          <FlatList
-            data={options}
-            keyExtractor={(item, idx) => `${item}-${idx}`}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={[styles.dropdownItemMini, { height: itemHeight }]} 
-                onPress={() => { onChange(item); setOpen(false); }}
-              >
-                <Text style={styles.dropdownItemTextMini}>{item}</Text>
-              </TouchableOpacity>
-            )}
-            nestedScrollEnabled={true}
-            scrollEnabled={true}
-            showsVerticalScrollIndicator={true}
-            getItemLayout={(data, index) => ({
-              length: itemHeight,
-              offset: itemHeight * index,
-              index,
-            })}
-          />
-        </View>
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   scaffold: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
@@ -387,60 +355,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   dropdownListBook: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '100%',
-    marginTop: 6,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderRadius: 12,
     elevation: 16,
     shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
-    zIndex: 60,
   },
-  dropdownItem: { paddingVertical: 12, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  dropdownItemText: { fontSize: 14, color: '#111827' },
-
-  // Mini dropdown styled like select_outlet
-  dropdownRootMini: { position: 'relative', zIndex: 1000 },
-  dropdownFieldMini: {
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dropdownTextMini: { color: '#111827', fontSize: 14, flex: 1 },
-  dropdownPlaceholderMini: { color: '#6B7280', fontSize: 14, flex: 1 },
-  dropdownListMini: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '100%',
-    marginTop: 6,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    elevation: 1000,
-    shadowColor: '#000', 
-    shadowOpacity: 0.15, 
-    shadowRadius: 8, 
-    shadowOffset: { width: 0, height: 2 },
-    zIndex: 1000,
-    overflow: 'hidden',
-  },
-  dropdownItemMini: { 
-    paddingVertical: 12, 
-    paddingHorizontal: 12, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#F1F5F9',
-    justifyContent: 'center',
-  },
-  dropdownItemTextMini: { fontSize: 14, color: '#111827' },
 });

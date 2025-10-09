@@ -17,6 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="homedashboard" options={{ title: 'Home', headerShown: false }} />
         <Stack.Screen name="book_order_input" options={{ title: 'Book Order', headerShown: false }} />
         <Stack.Screen name="course_menu_item" options={{ title: 'Course Menu', headerShown: false }} />
+        <Stack.Screen name="cart" options={{ title: 'Cart', headerShown: false }} />
 
 
       </Stack>

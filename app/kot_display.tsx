@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { router, Stack, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -36,12 +36,11 @@ export default function KotDisplayScreen() {
   }, []);
 
   // Reload orders when screen comes into focus
-  useEffect(() => {
-    const unsubscribe = router.addListener('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
       loadOrders();
-    });
-    return unsubscribe;
-  }, []);
+    }, [])
+  );
 
   const loadOrders = async () => {
     try {
@@ -212,7 +211,7 @@ export default function KotDisplayScreen() {
 
                <ScrollView 
                  style={styles.itemsScrollView}
-                 showsVerticalScrollIndicator={selectedOrder && selectedOrder.cartItems.length > 4}
+                 showsVerticalScrollIndicator={selectedOrder ? selectedOrder.cartItems.length > 4 : false}
                  scrollEnabled={true}
                  nestedScrollEnabled={true}
                  bounces={true}

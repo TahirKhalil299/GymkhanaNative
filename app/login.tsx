@@ -113,7 +113,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.root}>
       {/* Top hero image */}
-      <Image source={require('../assets/images/android-icon-background.png')} style={styles.hero} resizeMode="cover" />
+      <Image source={require('../assets/images/splash_background.png')} style={styles.hero} resizeMode="cover" />
 
       {/* Bottom sheet container */}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0} style={styles.bottomSheet}>
