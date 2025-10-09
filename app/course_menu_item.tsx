@@ -338,8 +338,8 @@ const styles = StyleSheet.create({
   itemName: { color: '#111827', fontWeight: '700', fontSize: 16, marginBottom: 4 },
   itemPrice: { color: '#DC2626', fontWeight: '700', fontSize: 14 },
   // List vertical position helpers (do not change FlatList contentContainerStyle)
-  listAdjustBase: { marginTop: 0, flex: 1 },
-  listAdjustLift: { marginTop: -40, flex: 1 },
+  listAdjustBase: { marginTop: 0, flex: 0 },
+  listAdjustLift: { marginTop: 5, flex: 1 },
   addButton: {
     width: 40,
     height: 40,

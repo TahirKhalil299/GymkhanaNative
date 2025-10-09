@@ -35,11 +35,8 @@ const courses: Course[] = [
     ]},
     { id: 5, name: 'Mocktails', items: [
       { id: 5001, name: 'Virgin Mojito', price: 180.0 },
-      { id: 5002, name: 'Strawberry Daiquiri', price: 190.0 },
-      { id: 5003, name: 'Pina Colada', price: 200.0 },
-      { id: 5004, name: 'Sunset Cooler', price: 170.0 },
-      { id: 5005, name: 'Blue Lagoon', price: 185.0 },
-      { id: 5006, name: 'Passion Fruit Fizz', price: 195.0 },
+ 
+     
     ]},
     { id: 6, name: 'Italian Pizza', items: [
       { id: 6001, name: 'Margherita Classica', price: 420.0 },
