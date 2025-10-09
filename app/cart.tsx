@@ -199,6 +199,7 @@ export default function CartScreen() {
                 tableNo: params.table_no ?? '',
                 waiterId: params.waiter_id ?? '',
                 waiterName: params.waiter_name ?? '',
+                serviceType: deliveryType,
                 cartItems: cartItems,
                 grandTotal: grandTotal,
                 itemCount: itemCount,
@@ -238,7 +239,7 @@ export default function CartScreen() {
             }
           }}
         >
-          <Text style={styles.checkoutText}>CHECKOUT</Text>
+          <Text style={styles.checkoutText}>Place Order</Text>
         </TouchableOpacity>
         {/* Maintain visual space above the bottom bar */}
       </View>

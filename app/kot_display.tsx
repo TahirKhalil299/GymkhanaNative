@@ -14,6 +14,7 @@ type OrderData = {
   tableNo: string;
   waiterId: string;
   waiterName: string;
+  serviceType?: 'DINING_IN' | 'TAKE_AWAY';
   cartItems: {
     id: number;
     name: string;
@@ -30,9 +31,28 @@ export default function KotDisplayScreen() {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [outletName, setOutletName] = useState<string>('');
 
   useEffect(() => {
     loadOrders();
+    (async () => {
+      try {
+        // Try a few common keys; fallback to empty
+        const v1 = await AsyncStorage.getItem('selected_outlet');
+        const v2 = await AsyncStorage.getItem('selectedOutlet');
+        const v3 = await AsyncStorage.getItem('selected_outlet_name');
+        const v = v3 || v2 || v1;
+        if (v) {
+          try {
+            const parsed = JSON.parse(v);
+            // Accept either object with name or plain string
+            setOutletName(parsed?.name || parsed?.outletName || parsed || '');
+          } catch {
+            setOutletName(v);
+          }
+        }
+      } catch {}
+    })();
   }, []);
 
   // Reload orders when screen comes into focus
@@ -137,7 +157,7 @@ export default function KotDisplayScreen() {
       <View style={styles.tagsContainer}>
         <View style={styles.tag}>
           <Text style={styles.tagText}>Table {item.tableNo}</Text>
-        </View>
+        </View> 
         <View style={styles.tag}>
           <Text style={styles.tagText}>Coffee Shop</Text>
         </View>
@@ -182,34 +202,50 @@ export default function KotDisplayScreen() {
          onRequestClose={closeOrderDialog}
        >
          <View style={styles.modalOverlay}>
-           <View style={styles.dialogContainer}>
-             <View style={styles.dialogHeader}>
-               <Text style={styles.dialogTitle}>Table {selectedOrder?.tableNo} Order Details</Text>
+          <View style={styles.dialogContainer}>
+            <View style={styles.dialogHeader}>
+              <Text style={styles.dialogTitle}>Order Details</Text>
                <TouchableOpacity onPress={closeOrderDialog} style={styles.closeBtn}>
                  <Ionicons name="close" size={24} color="#000000" />
                </TouchableOpacity>
              </View>
 
              <View style={styles.dialogContent}>
-               <View style={styles.orderInfoRow}>
-                 <View style={styles.orderIdField}>
-                   <Text style={styles.orderIdText}>{selectedOrder?.orderNumber}</Text>
-                 </View>
-                 <View style={styles.venueField}>
-                   <Text style={styles.venueText}>Coffee Shop</Text>
-                 </View>
-               </View>
-               
-               <Text style={styles.orderDateTime}>{formatDate(selectedOrder?.timestamp || '')}</Text>
+              {/* Row 1: Order No  |  Shop */}
+              <View style={styles.orderInfoRow}>
+                <View style={styles.orderIdField}>
+                  <Text style={styles.orderIdText}>{selectedOrder?.orderNumber}</Text>
+                </View>
+                <View style={styles.venueField}>
+                  <Text style={styles.venueText}>{outletName || 'Coffee Shop'}</Text>
+                </View>
+              </View>
 
-               <View style={styles.orderItemsSection}>
-                 <Text style={styles.orderItemsTitle}>Order Items</Text>
-                 <Text style={styles.orderItemsCount}>{selectedOrder?.cartItems.length}x</Text>
-               </View>
+              {/* Row 2: Table No  |  Date & time */}
+              <View style={[styles.orderInfoRow, { alignItems: 'center' }]}>
+                <View style={styles.orderIdField}>
+                  <Text style={styles.orderIdText}>{`Table ${selectedOrder?.tableNo ?? ''}`}</Text>
+                </View>
+                <View style={[styles.venueField, { backgroundColor: '#F3F4F6' }]}>
+                  <Text style={styles.venueText}>{selectedOrder ? formatDate(selectedOrder.timestamp) : ''}</Text>
+                </View>
+              </View>
 
-               <ScrollView 
-                 style={styles.itemsScrollView}
-                 showsVerticalScrollIndicator={selectedOrder ? selectedOrder.cartItems.length > 4 : false}
+              {/* Row 3: Service Type */}
+              <View style={[styles.orderInfoRow, { marginTop: 4 }]}> 
+                <View style={[styles.venueField, { backgroundColor: '#E5E7EB' }]}> 
+                  <Text style={styles.venueText}>{selectedOrder?.serviceType === 'DINING_IN' ? 'DiningIn' : 'TakeAway'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.orderItemsSection}>
+                <Text style={styles.orderItemsTitle}>Order Items</Text>
+                <Text style={styles.orderItemsCount}>{selectedOrder?.cartItems.length}x</Text>
+              </View>
+
+              <ScrollView 
+                style={styles.itemsScrollView}
+                showsVerticalScrollIndicator={selectedOrder ? selectedOrder.cartItems.length > 4 : false}
                  scrollEnabled={true}
                  nestedScrollEnabled={true}
                  bounces={true}
@@ -321,20 +357,21 @@ const styles = StyleSheet.create({
   dialogContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    width: '100%',
+    width: '92%',
     maxHeight: '80%',
     elevation: 8,
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    flex: 1,
+    alignSelf: 'center',
   },
   dialogHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
@@ -348,8 +385,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   dialogContent: {
-    padding: 20,
-    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   orderInfoRow: {
     flexDirection: 'row',
@@ -401,11 +438,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
-  itemsScrollView: {
-    maxHeight: 200,
-    marginBottom: 20,
-    flex: 1,
-  },
+  itemsScrollView: { maxHeight: 200, marginBottom: 16 },
   itemsContainer: {
     paddingBottom: 8,
     flexGrow: 1,
