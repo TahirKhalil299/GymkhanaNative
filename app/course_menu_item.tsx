@@ -116,7 +116,7 @@ export default function CourseMenuScreen() {
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={() => {
-            router.push({
+            router.replace({
               pathname: '/cart',
               params: {
                 order_number: orderNumber,
@@ -243,7 +243,7 @@ export default function CourseMenuScreen() {
             style={styles.viewOrderBar}
             activeOpacity={0.9}
             onPress={() => {
-              router.push({
+            router.replace({
                 pathname: '/cart',
                 params: {
                   order_number: orderNumber,

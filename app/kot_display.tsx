@@ -151,14 +151,12 @@ export default function KotDisplayScreen() {
       
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={20} color="#ffffff" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>KOT Display</Text>
       </View>
 
-      <View style={styles.pendingBanner}>
-        <Text style={styles.pendingText}>Pending KOT</Text>
-      </View>
+     
 
        {orders.length === 0 ? (
          <View style={styles.emptyContainer}>

@@ -38,17 +38,21 @@ export default function CartScreen() {
   const [cartItems, setCartItems] = useState<SimpleCartItem[]>(initialItems);
 
   // Delivery type display-only, comes from previous screen
-  const deliveryType: 'TAKE_AWAY' | 'HOME_DELIVERY' | 'DINING_IN' =
-    orderType === 'HOME DELIVERY' ? 'HOME_DELIVERY' : (orderType === 'DINING IN' ? 'DINING_IN' : 'TAKE_AWAY');
+  const deliveryType: 'TAKE_AWAY' | 'DINING_IN' =
+    orderType.includes('DINING') ? 'DINING_IN' : 'TAKE_AWAY';
 
   // Totals (keep simple, tax and delivery fee are zero for now)
   const { itemCount, subTotal, tax, deliveryFee, grandTotal } = useMemo(() => {
-    const count = cartItems.reduce((s, i) => s + i.quantity, 0) || initialCount;
-    const sub = cartItems.reduce((s, i) => s + i.price * i.quantity, 0) || initialGrand;
+    const hasRuntimeItems = cartItems.length > 0;
+    const count = hasRuntimeItems ? cartItems.reduce((s, i) => s + i.quantity, 0) : 0;
+    const sub = hasRuntimeItems ? cartItems.reduce((s, i) => s + i.price * i.quantity, 0) : 0;
     const t = 0;
     const d = 0;
-    return { itemCount: count, subTotal: sub, tax: t, deliveryFee: d, grandTotal: sub + t + d };
-  }, [cartItems, initialCount, initialGrand]);
+    // If there are no runtime items and we navigated in with initial params, prefer zeros for a cleared cart
+    const finalCount = hasRuntimeItems ? count : 0;
+    const finalSub = hasRuntimeItems ? sub : 0;
+    return { itemCount: finalCount, subTotal: finalSub, tax: t, deliveryFee: d, grandTotal: finalSub + t + d };
+  }, [cartItems]);
 
   const increaseItem = (id: number) => setCartItems(prev => prev.map(ci => ci.id === id ? { ...ci, quantity: ci.quantity + 1 } : ci));
   const decreaseItem = (id: number) => setCartItems(prev => {
@@ -86,7 +90,7 @@ export default function CartScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={navigateBackToMenu}>
-          <Ionicons name="chevron-back" size={20} color="#ffffff" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <View style={{ marginLeft: 12 }}>
           <Text style={styles.headerTitle}>Order Details</Text>
@@ -99,7 +103,7 @@ export default function CartScreen() {
         {cartItems.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 28 }}>
             <Image
-              source={require('../assets/images/logo.png')}
+              source={require('../assets/images/not_found.png')}
               style={{ width: 160, height: 120, resizeMode: 'contain', marginBottom: 8 }}
               // Fallback: if asset missing, Image will silently fail; UI still fine
             />
@@ -138,10 +142,10 @@ export default function CartScreen() {
                     <TouchableOpacity style={[styles.qtySquareBtn, styles.qtyPlus]} activeOpacity={0.6} onPress={() => increaseItem(item.id)}>
                       <Ionicons name="add" size={16} color="#ffffff" />
                     </TouchableOpacity>
+                    <TouchableOpacity style={styles.deleteInlineBtn} activeOpacity={0.6} onPress={() => deleteItem(item.id)}>
+                      <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.deleteBtn} activeOpacity={0.6} onPress={() => deleteItem(item.id)}>
-                    <Ionicons name="trash-outline" size={18} color="#D84315" />
-                  </TouchableOpacity>
                 </View>
               )}
               showsVerticalScrollIndicator={true}
@@ -161,17 +165,22 @@ export default function CartScreen() {
 
         {/* Delivery type selection (display-only) */}
         <View style={styles.deliveryRow}>
-          <View style={styles.deliveryOption}>
-            <View style={[styles.radioOuter, (deliveryType === 'TAKE_AWAY') ? styles.radioOuterActive : undefined]}>
-              <View style={[styles.radioInner, (deliveryType === 'TAKE_AWAY') ? styles.radioInnerActive : undefined]} />
+          <View style={styles.deliveryLeft}>
+            <View style={styles.deliveryOption}>
+              <View style={[styles.radioOuter, (deliveryType === 'DINING_IN') ? styles.radioOuterActive : undefined]}>
+                <View style={[styles.radioInner, (deliveryType === 'DINING_IN') ? styles.radioInnerActive : undefined]} />
+              </View>
+              <Text style={styles.deliveryLabel}>DiningIn</Text>
             </View>
-            <Text style={styles.deliveryLabel}>Take Away</Text>
+            <View style={styles.deliveryOption}>
+              <View style={[styles.radioOuter, (deliveryType === 'TAKE_AWAY') ? styles.radioOuterActive : undefined]}>
+                <View style={[styles.radioInner, (deliveryType === 'TAKE_AWAY') ? styles.radioInnerActive : undefined]} />
+              </View>
+              <Text style={styles.deliveryLabel}>TakeAway</Text>
+            </View>
           </View>
-          <View style={styles.deliveryOption}>
-            <View style={[styles.radioOuter, (deliveryType === 'HOME_DELIVERY') ? styles.radioOuterActive : undefined]}>
-              <View style={[styles.radioInner, (deliveryType === 'HOME_DELIVERY') ? styles.radioInnerActive : undefined]} />
-            </View>
-            <Text style={styles.deliveryLabel}>Home Delivery</Text>
+          <View style={styles.itemsCountRight}>
+            <Text style={{ color: '#374151', fontWeight: '800' }}>{`Items: ${itemCount}`}</Text>
           </View>
         </View>
 
@@ -264,6 +273,7 @@ const styles = StyleSheet.create({
   qtyPlus: { backgroundColor: '#D84315' },
   itemQtyLabel: { minWidth: 16, textAlign: 'center', color: '#111827', fontWeight: '800' },
   deleteBtn: { position: 'absolute', right: 12, top: 52, width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2' },
+  deleteInlineBtn: { width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2' },
 
   // Empty state
   emptyTitle: { marginTop: 6, fontSize: 18, fontWeight: '800', color: '#111827' },
@@ -278,12 +288,14 @@ const styles = StyleSheet.create({
 
   // Delivery selection
   deliveryRow: { marginHorizontal: 16, marginTop: 16, marginBottom: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  deliveryLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   deliveryOption: { flexDirection: 'row', alignItems: 'center' },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
   radioOuterActive: { borderColor: '#D84315' },
   radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: 'transparent' },
   radioInnerActive: { backgroundColor: '#D84315' },
   deliveryLabel: { marginLeft: 8, color: '#374151', fontWeight: '700' },
+  itemsCountRight: { marginRight: 16 },
 
   // Bottom checkout bar
   bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'transparent', paddingHorizontal: 16, paddingTop: 10 },
