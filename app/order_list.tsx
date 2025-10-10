@@ -46,9 +46,9 @@ export default function OrderList() {
       const savedOrders = await AsyncStorage.getItem('allOrders');
       if (savedOrders) {
         const ordersData: OrderData[] = JSON.parse(savedOrders);
-        // Show orders that were processed from KOT
+        // Show orders that were processed from KOT or closed
         const processed = ordersData
-          .filter(o => o.status === 'Processed')
+          .filter(o => o.status === 'Processed' || o.status === 'Closed')
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setOrders(processed);
       } else {
@@ -79,7 +79,7 @@ export default function OrderList() {
     <TouchableOpacity style={styles.card} onPress={() => openOrder(item)} activeOpacity={0.8}>
       <View style={styles.rowBetween}>
         <Text style={styles.orderId}>{item.orderNumber}</Text>
-        <View style={[styles.badge, { backgroundColor: '#10B981' }]}>
+        <View style={[styles.badge, { backgroundColor: item.status === 'Closed' ? '#EF4444' : '#10B981' }]}>
           <Text style={styles.badgeText}>{item.status}</Text>
         </View>
       </View>

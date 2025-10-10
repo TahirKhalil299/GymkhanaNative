@@ -19,6 +19,7 @@ type Params = {
   cart_total?: string;
   cart_count?: string;
   cart_items?: string;
+  is_edit_mode?: string;
 };
 
 export default function CourseMenuScreen() {
@@ -35,6 +36,7 @@ export default function CourseMenuScreen() {
   const orderType = params.order_type ?? '';
   const waiterId = params.waiter_id ?? '';
   const waiterName = params.waiter_name ?? '';
+  const isEditMode = params.is_edit_mode === 'true';
 
   // Courses
   const courses: Course[] = useMemo(() => getSampleCourses(), []);
@@ -47,11 +49,21 @@ export default function CourseMenuScreen() {
     return src.map(i => ({ id: i.id, code: String(i.id), name: i.name, price: i.price }));
   }, [selectedCourse]);
 
-  type SimpleCartItem = { id: number; name: string; price: number; quantity: number };
+  type SimpleCartItem = { id: number; name: string; price: number; quantity: number; isExisting?: boolean };
   const initialItems: SimpleCartItem[] = useMemo(() => {
     try { return params.cart_items ? JSON.parse(String(params.cart_items)) as SimpleCartItem[] : []; } catch { return []; }
   }, [params.cart_items]);
-  const [cartItems, setCartItems] = useState<SimpleCartItem[]>(initialItems);
+  
+  // In edit mode, mark existing items as non-removable
+  const processedInitialItems = useMemo(() => {
+    if (isEditMode) {
+      return initialItems.map(item => ({ ...item, isExisting: true }));
+    }
+    return initialItems;
+  }, [initialItems, isEditMode]);
+  
+  const [existingItems] = useState<SimpleCartItem[]>(processedInitialItems);
+  const [cartItems, setCartItems] = useState<SimpleCartItem[]>([]);
   const [cartCount, setCartCount] = useState(Number(params.cart_count ?? (initialItems.reduce((s, i) => s + i.quantity, 0))));
   const [cartTotal, setCartTotal] = useState(Number(params.cart_total ?? (initialItems.reduce((s, i) => s + i.price * i.quantity, 0))));
   const showBottomCart = cartCount > 0;
@@ -102,7 +114,11 @@ export default function CourseMenuScreen() {
     });
   };
 
-  const getQty = (id: number) => cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+  const getQty = (id: number) => {
+    const existingQty = existingItems.find(ci => ci.id === id)?.quantity ?? 0;
+    const newQty = cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+    return existingQty + newQty;
+  };
 
   return (
     <SafeAreaView style={styles.scaffold} edges={['top', 'left', 'right', 'bottom']}>
@@ -116,6 +132,7 @@ export default function CourseMenuScreen() {
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={() => {
+            const allItems = [...existingItems, ...cartItems];
             router.replace({
               pathname: '/cart',
               params: {
@@ -130,7 +147,8 @@ export default function CourseMenuScreen() {
                 waiter_name: waiterName,
                 cart_total: String(cartTotal),
                 cart_count: String(cartCount),
-                cart_items: JSON.stringify(cartItems),
+                cart_items: JSON.stringify(allItems),
+                is_edit_mode: String(isEditMode),
               },
             });
           }}
@@ -243,6 +261,7 @@ export default function CourseMenuScreen() {
             style={styles.viewOrderBar}
             activeOpacity={0.9}
             onPress={() => {
+            const allItems = [...existingItems, ...cartItems];
             router.replace({
                 pathname: '/cart',
                 params: {
@@ -257,7 +276,8 @@ export default function CourseMenuScreen() {
                   waiter_name: waiterName,
                   cart_total: String(cartTotal),
                   cart_count: String(cartCount),
-                  cart_items: JSON.stringify(cartItems),
+                  cart_items: JSON.stringify(allItems),
+                  is_edit_mode: String(isEditMode),
                 },
               });
             }}

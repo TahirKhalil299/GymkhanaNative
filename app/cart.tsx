@@ -19,6 +19,7 @@ type Params = {
   cart_total?: string;
   cart_count?: string;
   cart_items?: string;
+  is_edit_mode?: string;
 };
 
 export default function CartScreen() {
@@ -32,11 +33,30 @@ export default function CartScreen() {
   const orderType = (params.order_type ?? '').toUpperCase();
   const initialGrand = Number(params.cart_total ?? 0);
   const initialCount = Number(params.cart_count ?? 0);
-  type SimpleCartItem = { id: number; name: string; price: number; quantity: number };
+  const isEditMode = params.is_edit_mode === 'true';
+  
+  type SimpleCartItem = { id: number; name: string; price: number; quantity: number; isExisting?: boolean };
   const initialItems: SimpleCartItem[] = (() => {
     try { return params.cart_items ? JSON.parse(String(params.cart_items)) : []; } catch { return []; }
   })();
-  const [cartItems, setCartItems] = useState<SimpleCartItem[]>(initialItems);
+  
+  // Separate existing items from new items in edit mode
+  const [existingItems, setExistingItems] = useState<SimpleCartItem[]>(() => {
+    try {
+      return isEditMode ? (initialItems || []).filter(item => item.isExisting) : [];
+    } catch (error) {
+      console.error('Error initializing existingItems:', error);
+      return [];
+    }
+  });
+  const [cartItems, setCartItems] = useState<SimpleCartItem[]>(() => {
+    try {
+      return isEditMode ? (initialItems || []).filter(item => !item.isExisting) : (initialItems || []);
+    } catch (error) {
+      console.error('Error initializing cartItems:', error);
+      return [];
+    }
+  });
 
   // Delivery type display-only, comes from previous screen
   const deliveryType: 'TAKE_AWAY' | 'DINING_IN' =
@@ -44,29 +64,37 @@ export default function CartScreen() {
 
   // Totals (keep simple, tax and delivery fee are zero for now)
   const { itemCount, subTotal, tax, deliveryFee, grandTotal } = useMemo(() => {
-    const hasRuntimeItems = cartItems.length > 0;
-    const count = hasRuntimeItems ? cartItems.reduce((s, i) => s + i.quantity, 0) : 0;
-    const sub = hasRuntimeItems ? cartItems.reduce((s, i) => s + i.price * i.quantity, 0) : 0;
+    // Add null checks to prevent undefined errors
+    const safeExistingItems = existingItems || [];
+    const safeCartItems = cartItems || [];
+    const allItems = [...safeExistingItems, ...safeCartItems];
+    const hasRuntimeItems = allItems.length > 0;
+    const count = hasRuntimeItems ? allItems.reduce((s, i) => s + i.quantity, 0) : 0;
+    const sub = hasRuntimeItems ? allItems.reduce((s, i) => s + i.price * i.quantity, 0) : 0;
     const t = 0;
     const d = 0;
     // If there are no runtime items and we navigated in with initial params, prefer zeros for a cleared cart
     const finalCount = hasRuntimeItems ? count : 0;
     const finalSub = hasRuntimeItems ? sub : 0;
     return { itemCount: finalCount, subTotal: finalSub, tax: t, deliveryFee: d, grandTotal: finalSub + t + d };
-  }, [cartItems]);
+  }, [existingItems, cartItems]);
 
-  const increaseItem = (id: number) => setCartItems(prev => prev.map(ci => ci.id === id ? { ...ci, quantity: ci.quantity + 1 } : ci));
+  const increaseItem = (id: number) => setCartItems(prev => (prev || []).map(ci => ci.id === id ? { ...ci, quantity: ci.quantity + 1 } : ci));
   const decreaseItem = (id: number) => setCartItems(prev => {
-    const idx = prev.findIndex(ci => ci.id === id);
-    if (idx === -1) return prev;
-    const next = [...prev];
+    const safePrev = prev || [];
+    const idx = safePrev.findIndex(ci => ci.id === id);
+    if (idx === -1) return safePrev;
+    const next = [...safePrev];
     const q = next[idx].quantity - 1;
     if (q <= 0) next.splice(idx, 1); else next[idx] = { ...next[idx], quantity: q };
     return next;
   });
-  const deleteItem = (id: number) => setCartItems(prev => prev.filter(ci => ci.id !== id));
+  const deleteItem = (id: number) => setCartItems(prev => (prev || []).filter(ci => ci.id !== id));
 
   const navigateBackToMenu = () => {
+    const safeExistingItems = existingItems || [];
+    const safeCartItems = cartItems || [];
+    const allItems = [...safeExistingItems, ...safeCartItems];
     router.replace({
       pathname: '/course_menu_item',
       params: {
@@ -81,7 +109,8 @@ export default function CartScreen() {
         order_type: params.order_type ?? '',
         cart_total: String(grandTotal),
         cart_count: String(itemCount),
-        cart_items: JSON.stringify(cartItems),
+        cart_items: JSON.stringify(allItems),
+        is_edit_mode: String(isEditMode),
       }
     });
   };
@@ -101,7 +130,7 @@ export default function CartScreen() {
       </View>
 
         {/* Items or empty state */}
-        {cartItems.length === 0 ? (
+        {((existingItems || []).length + (cartItems || []).length) === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 28 }}>
             <Image
               source={require('../assets/images/not_found.png')}
@@ -121,11 +150,17 @@ export default function CartScreen() {
           </View>
         ) : (
           <View style={styles.itemsArea}>
+            {/* Show existing items section if in edit mode */}
+            {isEditMode && (existingItems || []).length > 0 && (
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Existing Items (Cannot be removed)</Text>
+              </View>
+            )}
             <FlatList
-              data={cartItems}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
+              data={isEditMode ? [...(existingItems || []), ...(cartItems || [])] : (cartItems || [])}
+              keyExtractor={(item, index) => `${item.id}-${index}-${item.isExisting ? 'existing' : 'new'}`}
               renderItem={({ item }) => (
-                <View style={styles.itemCard}>
+                <View style={[styles.itemCard, item.isExisting && styles.existingItemCard]}>
                   <View style={styles.itemLeft}>
                     <View style={styles.itemImagePlaceholder}>
                       <Ionicons name="person" size={20} color="#9CA3AF" />
@@ -133,9 +168,14 @@ export default function CartScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       <Text style={styles.itemPriceText}>{`Rs. ${item.price.toFixed(0)}`}</Text>
+                      {item.isExisting && (
+                        <Text style={styles.existingItemLabel}>Existing Item</Text>
+                      )}
                     </View>
                   </View>
                   <View style={styles.itemRight}>
+                    {!item.isExisting && (
+                      <>
                     <TouchableOpacity style={[styles.qtySquareBtn, styles.qtyMinus]} activeOpacity={0.6} onPress={() => decreaseItem(item.id)}>
                       <Ionicons name="remove" size={16} color="#6B7280" />
                     </TouchableOpacity>
@@ -146,6 +186,14 @@ export default function CartScreen() {
                     <TouchableOpacity style={styles.deleteInlineBtn} activeOpacity={0.6} onPress={() => deleteItem(item.id)}>
                       <Ionicons name="trash-outline" size={16} color="#DC2626" />
                     </TouchableOpacity>
+                      </>
+                    )}
+                    {item.isExisting && (
+                      <View style={styles.existingItemControls}>
+                        <Text style={styles.itemQtyLabel}>{item.quantity}</Text>
+                        <Text style={styles.lockedIcon}>🔒</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               )}
@@ -187,10 +235,37 @@ export default function CartScreen() {
 
       <View style={[styles.bottomBar, { paddingBottom: 12 + insets.bottom }]}>
         <TouchableOpacity
-          disabled={cartItems.length === 0}
-          style={[styles.checkoutBtn, cartItems.length === 0 ? styles.checkoutBtnDisabled : undefined]}
+          disabled={(cartItems || []).length === 0}
+          style={[styles.checkoutBtn, (cartItems || []).length === 0 ? styles.checkoutBtnDisabled : undefined]}
           onPress={async () => {
             try {
+              // Prepare safe arrays up-front to avoid undefined access
+              const safeExistingItems = existingItems || [];
+              const safeCartItems = cartItems || [];
+              const allItems = [...safeExistingItems, ...safeCartItems];
+
+              // Validate required fields
+              console.log('Order validation - params:', {
+                order_number: params.order_number,
+                member_id: params.member_id,
+                table_no: params.table_no,
+                allItemsLength: allItems.length,
+                cartItemsLength: safeCartItems.length,
+                existingItemsLength: safeExistingItems.length
+              });
+              
+              if (!params.order_number || params.order_number.trim() === '') {
+                console.error('Order number validation failed:', params.order_number);
+                Alert.alert('Error', 'Order number is required');
+                return;
+              }
+              
+              if (allItems.length === 0) {
+                console.error('No items validation failed:', { cartItems: safeCartItems.length, existingItems: safeExistingItems.length });
+                Alert.alert('Error', 'Cannot place order with no items');
+                return;
+              }
+              
               // Resolve current outlet name from storage
               let outletName = '';
               try {
@@ -214,7 +289,86 @@ export default function CartScreen() {
                 } catch {}
               }
 
-              const orderData = {
+              console.log('Order validation passed. Proceeding to save...');
+
+              // safeExistingItems, safeCartItems, and allItems are already prepared above
+              
+              // Validate cart items structure
+              console.log('Cart items validation:', {
+                existingItems: safeExistingItems.map(item => ({ id: item.id, name: item.name, quantity: item.quantity })),
+                cartItems: safeCartItems.map(item => ({ id: item.id, name: item.name, quantity: item.quantity })),
+                allItems: allItems.map(item => ({ id: item.id, name: item.name, quantity: item.quantity, price: item.price }))
+              });
+              
+              // Validate that all items have required properties
+              const invalidItems = allItems.filter(item => 
+                !item.id || !item.name || !item.price || !item.quantity || item.quantity <= 0
+              );
+              
+              if (invalidItems.length > 0) {
+                console.error('Invalid items found:', invalidItems);
+                Alert.alert('Error', `Invalid items found: ${invalidItems.map(item => item.name || 'Unknown').join(', ')}`);
+                return;
+              }
+              
+              // Get existing orders first to find the original order in edit mode
+              console.log('Fetching existing orders from AsyncStorage...');
+              const existingOrders = await AsyncStorage.getItem('allOrders');
+              let allOrders = [];
+              
+              if (existingOrders) {
+                try {
+                  allOrders = JSON.parse(existingOrders);
+                  console.log('Successfully parsed existing orders:', allOrders.length);
+                } catch (parseError) {
+                  console.error('Error parsing existing orders:', parseError);
+                  allOrders = [];
+                }
+              } else {
+                console.log('No existing orders found, starting with empty array');
+              }
+              
+              let finalOrderData; // Declare variable outside the if/else blocks
+              
+              if (isEditMode) {
+                // Find the existing order to preserve its original timestamp
+                const existingOrder = allOrders.find(o => o.orderNumber === params.order_number);
+                const originalTimestamp = existingOrder ? existingOrder.timestamp : new Date().toISOString();
+                
+                console.log('Editing existing order:', params.order_number);
+                console.log('Original timestamp preserved:', originalTimestamp);
+                
+                // Update existing order in edit mode - preserve original timestamp and order ID
+                finalOrderData = {
+                  orderNumber: params.order_number ?? '',
+                  memberId: params.member_id ?? '',
+                  memberType: params.member_type ?? '',
+                  pax: params.pax ?? '',
+                  memberName: params.member_name ?? '',
+                  tableNo: params.table_no ?? '',
+                  waiterId: params.waiter_id ?? '',
+                  waiterName: params.waiter_name ?? '',
+                  serviceType: deliveryType,
+                  cartItems: allItems,
+                  grandTotal: grandTotal,
+                  itemCount: itemCount,
+                  timestamp: originalTimestamp, // Preserve original timestamp
+                  status: 'Pending', // Set back to Pending so it appears in KOT
+                  outletName: outletName
+                };
+                
+                console.log('Updated order data:', finalOrderData);
+                
+                const updatedOrders = allOrders.map(o => 
+                  o.orderNumber === params.order_number ? finalOrderData : o
+                );
+                console.log('About to save updated orders to AsyncStorage...');
+                await AsyncStorage.setItem('allOrders', JSON.stringify(updatedOrders));
+                console.log('Order updated successfully with same ID:', params.order_number);
+              } else {
+                // Create new order with new timestamp
+                console.log('Creating new order:', params.order_number);
+                finalOrderData = {
                 orderNumber: params.order_number ?? '',
                 memberId: params.member_id ?? '',
                 memberType: params.member_type ?? '',
@@ -224,7 +378,7 @@ export default function CartScreen() {
                 waiterId: params.waiter_id ?? '',
                 waiterName: params.waiter_name ?? '',
                 serviceType: deliveryType,
-                cartItems: cartItems,
+                  cartItems: allItems,
                 grandTotal: grandTotal,
                 itemCount: itemCount,
                 timestamp: new Date().toISOString(),
@@ -232,26 +386,19 @@ export default function CartScreen() {
                 outletName: outletName
               };
               
-              // Get existing orders
-              const existingOrders = await AsyncStorage.getItem('allOrders');
-              let allOrders = [];
-              
-              if (existingOrders) {
-                allOrders = JSON.parse(existingOrders);
+                console.log('New order data:', finalOrderData);
+                allOrders.push(finalOrderData);
+                console.log('About to save new order to AsyncStorage...');
+                await AsyncStorage.setItem('allOrders', JSON.stringify(allOrders));
+                console.log('New order created successfully:', params.order_number);
               }
               
-              // Add new order to the list
-              allOrders.push(orderData);
-              
-              // Save updated orders list
-              await AsyncStorage.setItem('allOrders', JSON.stringify(allOrders));
-              
               // Also keep currentOrder for backward compatibility
-              await AsyncStorage.setItem('currentOrder', JSON.stringify(orderData));
+              await AsyncStorage.setItem('currentOrder', JSON.stringify(finalOrderData));
               
               Alert.alert(
-                'Order Placed!',
-                'Your order has been placed successfully.',
+                isEditMode ? 'Order Updated!' : 'Order Placed!',
+                isEditMode ? 'Your order has been updated successfully.' : 'Your order has been placed successfully.',
                 [
                   {
                     text: 'OK',
@@ -260,11 +407,18 @@ export default function CartScreen() {
                 ]
               );
             } catch (error) {
-              Alert.alert('Error', 'Failed to save order. Please try again.');
+              console.error('Error saving order:', error);
+              console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                params: params,
+                isEditMode: isEditMode
+              });
+              Alert.alert('Error', `Failed to save order. Error: ${error.message || 'Unknown error'}`);
             }
           }}
         >
-          <Text style={styles.checkoutText}>Place Order</Text>
+          <Text style={styles.checkoutText}>{isEditMode ? 'Update Order' : 'Place Order'}</Text>
         </TouchableOpacity>
         {/* Maintain visual space above the bottom bar */}
       </View>
@@ -328,6 +482,14 @@ const styles = StyleSheet.create({
   checkoutBtn: { backgroundColor: '#D84315', borderRadius: 8, height: 48, alignItems: 'center', justifyContent: 'center' },
   checkoutBtnDisabled: { opacity: 0.6 },
   checkoutText: { color: '#ffffff', fontWeight: '900', letterSpacing: 0.5 },
+  
+  // Edit mode styles
+  sectionHeader: { marginBottom: 12, paddingHorizontal: 4 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },
+  existingItemCard: { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' },
+  existingItemLabel: { fontSize: 12, color: '#0369A1', fontWeight: '600', marginTop: 2 },
+  existingItemControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  lockedIcon: { fontSize: 16 },
 });
 
 

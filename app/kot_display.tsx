@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, Stack, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OrderData = {
@@ -148,6 +148,39 @@ export default function KotDisplayScreen() {
     }
   };
 
+  const handleClosePress = async (order: OrderData) => {
+    try {
+      // Get all orders from AsyncStorage first
+      const savedOrders = await AsyncStorage.getItem('allOrders');
+      let allOrders: OrderData[] = [];
+      
+      if (savedOrders) {
+        allOrders = JSON.parse(savedOrders);
+      }
+      
+      // Update the specific order status to Closed
+      const updatedAllOrders = allOrders.map(o => 
+        o.orderNumber === order.orderNumber 
+          ? { ...o, status: 'Closed' }
+          : o
+      );
+      
+      // Update AsyncStorage with the complete list
+      await AsyncStorage.setItem('allOrders', JSON.stringify(updatedAllOrders));
+      
+      // Update local state with filtered orders (only pending ones)
+      const pendingOrders = updatedAllOrders.filter(o => 
+        o.status !== 'Processed' && o.status !== 'Closed'
+      );
+      setOrders(pendingOrders);
+      
+      // Close the dialog; do not navigate away
+      closeOrderDialog();
+    } catch (error) {
+      console.error('Error closing order:', error);
+    }
+  };
+
   const getTotalQuantity = (items: OrderData['cartItems']) => {
     try {
       return items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
@@ -211,13 +244,8 @@ export default function KotDisplayScreen() {
         animationType="fade"
         onRequestClose={closeOrderDialog}
       >
-        <TouchableWithoutFeedback onPress={closeOrderDialog}>
-          <View style={styles.modalOverlay} pointerEvents="box-none">
-           <View 
-             style={styles.dialogContainer} 
-             onStartShouldSetResponder={() => true}
-             onMoveShouldSetResponderCapture={() => true}
-           >
+        <View style={styles.modalOverlay}>
+          <View style={styles.dialogContainer}>
             <View style={styles.dialogHeader}>
               <Text style={styles.dialogTitle}>Order Details</Text>
               {selectedOrder && (
@@ -258,26 +286,23 @@ export default function KotDisplayScreen() {
                 <Text style={styles.orderItemsCount}>{selectedOrder ? getTotalQuantity(selectedOrder.cartItems) : 0}x</Text>
               </View>
 
-              <View style={styles.itemsWrapper}>
-              <FlatList
-                data={selectedOrder ? selectedOrder.cartItems : []}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
-                renderItem={({ item }) => (
-                  <View style={styles.orderItem}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemQuantity}>{item.quantity}x</Text>
-                  </View>
-                )}
-                style={styles.itemsList}
+              <ScrollView 
+                style={styles.itemsScrollView}
                 showsVerticalScrollIndicator={selectedOrder ? selectedOrder.cartItems.length > 4 : false}
                 scrollEnabled={true}
                 nestedScrollEnabled={true}
                 bounces={true}
+                alwaysBounceVertical={false}
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.itemsContent}
-                removeClippedSubviews={true}
-              />
-              </View>
+                contentContainerStyle={styles.itemsContainer}
+              >
+                {selectedOrder?.cartItems.map((item, index) => (
+                  <View key={index} style={styles.orderItem}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemQuantity}>{item.quantity}x</Text>
+                  </View>
+                ))}
+              </ScrollView>
 
                <View style={styles.actionButtons}>
                  <TouchableOpacity 
@@ -286,7 +311,10 @@ export default function KotDisplayScreen() {
                  >
                    <Ionicons name="checkmark" size={24} color="#FFFFFF" />
                  </TouchableOpacity>
-                 <TouchableOpacity style={[styles.actionBtn, styles.actionBtnRed]} onPress={() => {}}>
+                 <TouchableOpacity 
+                   style={[styles.actionBtn, styles.actionBtnRed]} 
+                   onPress={() => selectedOrder && handleClosePress(selectedOrder)}
+                 >
                    <Ionicons name="close" size={24} color="#FFFFFF" />
                  </TouchableOpacity>
                  <TouchableOpacity style={[styles.actionBtn, styles.actionBtnGray]} onPress={() => {}}>
@@ -294,9 +322,8 @@ export default function KotDisplayScreen() {
                  </TouchableOpacity>
                </View>
              </View>
-           </View>
-         </View>
-        </TouchableWithoutFeedback>
+          </View>
+        </View>
        </Modal>
      </SafeAreaView>
    );
@@ -462,9 +489,8 @@ const styles = StyleSheet.create({
   serviceDining: { backgroundColor: '#3B82F6' },
   serviceTakeaway: { backgroundColor: '#EF4444' },
   serviceText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
-  itemsWrapper: { maxHeight: 340 },
-  itemsList: { maxHeight: 340, marginBottom: 16 },
-  itemsContent: { paddingBottom: 8, paddingTop: 2 },
+  itemsScrollView: { maxHeight: 340, marginBottom: 16 },
+  itemsContainer: { paddingBottom: 8, flexGrow: 1 },
   orderItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
