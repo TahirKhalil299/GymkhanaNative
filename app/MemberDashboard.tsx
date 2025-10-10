@@ -47,8 +47,15 @@ const STORAGE = {
 
 const MemberDashboard: React.FC = () => {
   const handleCardPress = (cardName: string) => {
+    if (cardName === 'Room Booking') {
+      router.push('/room_details');
+      return;
+    }
+    if (cardName === 'View Bill') {
+      router.push('/billdetails');
+      return;
+    }
     console.log(`${cardName} pressed`);
-    // Add navigation or action logic here
   };
 
   const onLogout = async () => {
