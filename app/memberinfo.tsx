@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -49,6 +51,7 @@ const InfoRow: React.FC<{ label: string; value: string }> = ({
 );
 
 const MemberInfo: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const [expandedSections, setExpandedSections] = useState({
     personal: false,
     membership: false,
@@ -68,6 +71,16 @@ const MemberInfo: React.FC = () => {
   });
 
   useEffect(() => {
+    (async () => {
+      try {
+        const stored = await SecureStore.getItemAsync('profileData');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setProfile((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch {}
+    })();
+
     const sub = DeviceEventEmitter.addListener('profileUpdated', (updated: any) => {
       setProfile((prev) => ({
         ...prev,
@@ -90,9 +103,14 @@ const MemberInfo: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaProvider>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity>
           <Feather name="chevron-left" size={24} color="#fff" />
         </TouchableOpacity>
@@ -118,7 +136,7 @@ const MemberInfo: React.FC = () => {
         isExpanded={expandedSections.personal}
         onToggle={() => toggleSection('personal')}
       >
-        <InfoRow label="Father's Name" value={profile.fatherName} />
+        <InfoRow label="Name" value={profile.name} />
         <InfoRow label="Date of Birth" value={profile.dateOfBirth} />
         <InfoRow label="CNIC" value={profile.cnic} />
         <InfoRow label="Phone Number" value={profile.phoneNumber} />
@@ -183,6 +201,7 @@ const MemberInfo: React.FC = () => {
 
       <View style={{ height: 30 }} />
     </ScrollView>
+    </SafeAreaProvider>
   );
 };
 

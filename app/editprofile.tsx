@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import React, { useEffect, useState } from 'react';
 import { DeviceEventEmitter, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DropdownOption {
   label: string;
@@ -16,7 +18,8 @@ const genderOptions: DropdownOption[] = [
 
 // removed unused Dropdown interface
 
-const EditProfile: React.FC = () => {
+const EditProfileInner: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     name: 'Capt Farrukh Atiq Khan. Retd.',
     phoneNumber: '03333873087',
@@ -27,6 +30,18 @@ const EditProfile: React.FC = () => {
   });
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await SecureStore.getItemAsync('profileData');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setFormData((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch {}
+    })();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -46,12 +61,19 @@ const EditProfile: React.FC = () => {
   // removed unused handleViewOrder
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header with Moon Icon */}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+      {/* Header with back and placeholder icon */}
+      <View style={[styles.headerRow, { paddingTop: insets.top }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={24} color="#0891b2" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Edit Profile</Text>
+        <View style={{ width: 24 }} />
+      </View>
       <View style={styles.header}>
         <View style={styles.moonContainer}>
           <View style={styles.moonCircle}>
-            <Feather name="moon" size={32} color="#0891b2" />
+            <Feather name="user" size={32} color="#fff" />
           </View>
           <View style={styles.moonDecoration} />
         </View>
@@ -167,6 +189,8 @@ const EditProfile: React.FC = () => {
           style={styles.viewOrderButton}
           onPress={() => {
             DeviceEventEmitter.emit('profileUpdated', formData);
+            // persist for next open
+            SecureStore.setItemAsync('profileData', JSON.stringify(formData)).catch(() => {});
             router.back();
           }}
           activeOpacity={0.8}
@@ -175,6 +199,14 @@ const EditProfile: React.FC = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+  );
+};
+
+const EditProfile: React.FC = () => {
+  return (
+    <SafeAreaProvider>
+      <EditProfileInner />
+    </SafeAreaProvider>
   );
 };
 
@@ -189,6 +221,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerRow: {
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    color: '#0891b2',
+    fontSize: 18,
+    fontWeight: '700',
   },
   moonContainer: {
     position: 'relative',
