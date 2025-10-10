@@ -22,6 +22,8 @@ export default function RootLayout() {
         <Stack.Screen name="room_details" options={{ title: 'Room Details', headerShown: false }} />
         <Stack.Screen name="room_book_details" options={{ title: 'Room Book Details', headerShown: false }} />
         <Stack.Screen name="billdetails" options={{ title: 'Bill Details', headerShown: false }} />
+        <Stack.Screen name="memberinfo" options={{ title: 'Member Info', headerShown: false }} />
+        <Stack.Screen name="editprofile" options={{ title: 'Edit Profile', headerShown: false }} />
 
 
       </Stack>

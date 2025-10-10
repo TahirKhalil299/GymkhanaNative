@@ -1,0 +1,313 @@
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { DeviceEventEmitter, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+interface DropdownOption {
+  label: string;
+  value: string;
+}
+
+const genderOptions: DropdownOption[] = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+  { label: 'Other', value: 'other' },
+];
+
+// removed unused Dropdown interface
+
+const EditProfile: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: 'Capt Farrukh Atiq Khan. Retd.',
+    phoneNumber: '03333873087',
+    email: 'Farruhatiq@gmail.com',
+    address: '123, Shadman, GOR-',
+    organization: 'Services & General Administrative Department',
+    gender: 'Male',
+  });
+
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleGenderSelect = (option: DropdownOption) => {
+    setFormData((prev) => ({
+      ...prev,
+      gender: option.label,
+    }));
+    setDropdownVisible(false);
+  };
+
+  // removed unused handleViewOrder
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header with Moon Icon */}
+      <View style={styles.header}>
+        <View style={styles.moonContainer}>
+          <View style={styles.moonCircle}>
+            <Feather name="moon" size={32} color="#0891b2" />
+          </View>
+          <View style={styles.moonDecoration} />
+        </View>
+      </View>
+
+      {/* Form Section */}
+      <View style={styles.formContainer}>
+        {/* Name Field */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter name"
+            placeholderTextColor="#999"
+            value={formData.name}
+            onChangeText={(value) => handleInputChange('name', value)}
+            editable
+          />
+        </View>
+
+        {/* Phone Number Field */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Phone number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter phone number"
+            placeholderTextColor="#999"
+            value={formData.phoneNumber}
+            onChangeText={(value) => handleInputChange('phoneNumber', value)}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        {/* Email Field */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter email"
+            placeholderTextColor="#999"
+            value={formData.email}
+            onChangeText={(value) => handleInputChange('email', value)}
+            keyboardType="email-address"
+          />
+        </View>
+
+        {/* Address Field */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter address"
+            placeholderTextColor="#999"
+            value={formData.address}
+            onChangeText={(value) => handleInputChange('address', value)}
+          />
+        </View>
+
+        {/* Organization Field */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Organization</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter organization"
+            placeholderTextColor="#999"
+            value={formData.organization}
+            onChangeText={(value) => handleInputChange('organization', value)}
+            editable={false}
+          />
+        </View>
+
+        {/* Gender Dropdown */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Gender</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setDropdownVisible(!dropdownVisible)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.dropdownText}>{formData.gender}</Text>
+            <Feather
+              name="chevron-down"
+              size={20}
+              color="#0891b2"
+              style={{ transform: [{ rotate: dropdownVisible ? '180deg' : '0deg' }] }}
+            />
+          </TouchableOpacity>
+
+          {/* Dropdown Menu */}
+          {dropdownVisible && (
+            <View style={styles.dropdownMenu}>
+              {genderOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.dropdownMenuItem,
+                    index !== genderOptions.length - 1 &&
+                      styles.dropdownMenuItemBorder,
+                  ]}
+                  onPress={() => handleGenderSelect(option)}
+                >
+                  <Text style={styles.dropdownMenuItemText}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Save Profile Button */}
+        <TouchableOpacity
+          style={styles.viewOrderButton}
+          onPress={() => {
+            DeviceEventEmitter.emit('profileUpdated', formData);
+            router.back();
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.viewOrderButtonText}>SAVE PROFILE</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moonContainer: {
+    position: 'relative',
+    width: 80,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moonCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#0891b2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0891b2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  moonDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: -10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#0891b2',
+    backgroundColor: 'transparent',
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  fieldGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 0,
+    backgroundColor: '#e8eef4',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  dropdownButton: {
+    backgroundColor: '#e8eef4',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0891b2',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0891b2',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 100,
+  },
+  dropdownMenuItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dropdownMenuItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  dropdownMenuItemText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  viewOrderButton: {
+    backgroundColor: '#0891b2',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    shadowColor: '#0891b2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  viewOrderButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+});
+
+export default EditProfile;

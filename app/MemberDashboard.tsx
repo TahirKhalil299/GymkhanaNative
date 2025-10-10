@@ -55,6 +55,10 @@ const MemberDashboard: React.FC = () => {
       router.push('/billdetails');
       return;
     }
+    if (cardName === 'Profile') {
+      router.push('/memberinfo');
+      return;
+    }
     console.log(`${cardName} pressed`);
   };
 

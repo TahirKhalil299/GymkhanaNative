@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -25,7 +25,7 @@ const BillDetailsContent = () => {
   const bills: BillItem[] = [
     { id: '1', title: 'Room Charges', date: '10-10-2025', amount: 'Rs 2,500', status: 'Paid' },
     { id: '2', title: 'Dining', date: '09-10-2025', amount: 'Rs 1,200', status: 'Unpaid' },
-    { id: '3', title: 'Gym Subscription', date: '05-10-2025', amount: 'Rs 3,000', status: 'Paid' },
+    { id: '3', title: 'TakeAway', date: '05-10-2025', amount: 'Rs 3,000', status: 'Paid' },
   ];
 
   return (
