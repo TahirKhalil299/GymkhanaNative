@@ -67,10 +67,11 @@ export default function CartScreen() {
     // Add null checks to prevent undefined errors
     const safeExistingItems = existingItems || [];
     const safeCartItems = cartItems || [];
-    const allItems = [...safeExistingItems, ...safeCartItems];
-    const hasRuntimeItems = allItems.length > 0;
-    const count = hasRuntimeItems ? allItems.reduce((s, i) => s + i.quantity, 0) : 0;
-    const sub = hasRuntimeItems ? allItems.reduce((s, i) => s + i.price * i.quantity, 0) : 0;
+    // Totals should reflect only new items in edit mode to avoid doubling
+    const itemsForTotals = isEditMode ? safeCartItems : [...safeExistingItems, ...safeCartItems];
+    const hasRuntimeItems = itemsForTotals.length > 0;
+    const count = hasRuntimeItems ? itemsForTotals.reduce((s, i) => s + i.quantity, 0) : 0;
+    const sub = hasRuntimeItems ? itemsForTotals.reduce((s, i) => s + i.price * i.quantity, 0) : 0;
     const t = 0;
     const d = 0;
     // If there are no runtime items and we navigated in with initial params, prefer zeros for a cleared cart
@@ -94,7 +95,17 @@ export default function CartScreen() {
   const navigateBackToMenu = () => {
     const safeExistingItems = existingItems || [];
     const safeCartItems = cartItems || [];
-    const allItems = [...safeExistingItems, ...safeCartItems];
+    // Merge duplicates by id to avoid duplicate rows when returning to menu
+    const map = new Map<number, SimpleCartItem>();
+    [...safeExistingItems, ...safeCartItems].forEach(it => {
+      const prev = map.get(it.id);
+      if (prev) {
+        map.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
+      } else {
+        map.set(it.id, { ...it });
+      }
+    });
+    const allItems = Array.from(map.values());
     router.replace({
       pathname: '/course_menu_item',
       params: {
@@ -242,7 +253,17 @@ export default function CartScreen() {
               // Prepare safe arrays up-front to avoid undefined access
               const safeExistingItems = existingItems || [];
               const safeCartItems = cartItems || [];
-              const allItems = [...safeExistingItems, ...safeCartItems];
+              // Merge duplicates by id
+              const mergedMap = new Map<number, SimpleCartItem>();
+              [...safeExistingItems, ...safeCartItems].forEach(it => {
+                const prev = mergedMap.get(it.id);
+                if (prev) {
+                  mergedMap.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
+                } else {
+                  mergedMap.set(it.id, { ...it });
+                }
+              });
+              const allItems = Array.from(mergedMap.values());
 
               // Validate required fields
               console.log('Order validation - params:', {

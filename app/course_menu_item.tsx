@@ -50,6 +50,22 @@ export default function CourseMenuScreen() {
   }, [selectedCourse]);
 
   type SimpleCartItem = { id: number; name: string; price: number; quantity: number; isExisting?: boolean };
+  // Merge helper to avoid duplicate entries for same item id
+  const mergeItems = (base: SimpleCartItem[], added: SimpleCartItem[]) => {
+    const map = new Map<number, SimpleCartItem>();
+    for (const it of base) {
+      map.set(it.id, { ...it });
+    }
+    for (const it of added) {
+      const prev = map.get(it.id);
+      if (prev) {
+        map.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
+      } else {
+        map.set(it.id, { ...it });
+      }
+    }
+    return Array.from(map.values());
+  };
   const initialItems: SimpleCartItem[] = useMemo(() => {
     try { return params.cart_items ? JSON.parse(String(params.cart_items)) as SimpleCartItem[] : []; } catch { return []; }
   }, [params.cart_items]);
@@ -73,9 +89,11 @@ export default function CourseMenuScreen() {
   useEffect(() => {
     try {
       const parsed: SimpleCartItem[] = params.cart_items ? JSON.parse(String(params.cart_items)) : [];
-      setCartItems(parsed);
-      const newCount = Number(params.cart_count ?? (parsed.reduce((s, i) => s + i.quantity, 0)));
-      const newTotal = Number(params.cart_total ?? (parsed.reduce((s, i) => s + i.price * i.quantity, 0)));
+      // When navigating back from cart during edit, split items: keep existing in existingItems, load only new items into cartItems
+      const onlyNew = parsed.filter(i => !i.isExisting);
+      setCartItems(onlyNew);
+      const newCount = Number(params.cart_count ?? (onlyNew.reduce((s, i) => s + i.quantity, 0)));
+      const newTotal = Number(params.cart_total ?? (onlyNew.reduce((s, i) => s + i.price * i.quantity, 0)));
       setCartCount(newCount);
       setCartTotal(newTotal);
     } catch {}
@@ -132,7 +150,7 @@ export default function CourseMenuScreen() {
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={() => {
-            const allItems = [...existingItems, ...cartItems];
+            const allItems = mergeItems(existingItems, cartItems);
             router.replace({
               pathname: '/cart',
               params: {
@@ -261,7 +279,7 @@ export default function CourseMenuScreen() {
             style={styles.viewOrderBar}
             activeOpacity={0.9}
             onPress={() => {
-            const allItems = [...existingItems, ...cartItems];
+            const allItems = mergeItems(existingItems, cartItems);
             router.replace({
                 pathname: '/cart',
                 params: {
