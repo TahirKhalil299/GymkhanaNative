@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   savedUserId: 'savedUserId',
   savedPassword: 'savedPassword',
   userId: 'userId',
+  accountType: 'accountType',
 } as const;
 
 export default function LoginScreen() {
@@ -37,19 +38,32 @@ export default function LoginScreen() {
   }, []);
 
   const loadPrefs = useCallback(async () => {
-    const [isLoggedIn, isInfoSelected, remember, savedUid, savedPwd] = await Promise.all([
+    const [isLoggedIn, isInfoSelected, remember, savedUid, savedPwd, storedAccountType] = await Promise.all([
       SecureStore.getItemAsync(STORAGE_KEYS.isLoggedIn),
       SecureStore.getItemAsync('is_info_selected'),
       SecureStore.getItemAsync(STORAGE_KEYS.rememberMe),
       SecureStore.getItemAsync(STORAGE_KEYS.savedUserId),
       SecureStore.getItemAsync(STORAGE_KEYS.savedPassword),
+      SecureStore.getItemAsync(STORAGE_KEYS.accountType),
     ]);
 
     if (isLoggedIn === 'true') {
-      if (isInfoSelected === 'true') {
-        router.replace('/homedashboard');
+      if (storedAccountType === 'Member') {
+        router.replace('/MemberDashboard');
+      } else if (storedAccountType === 'Staff') {
+        // Staff must select outlet first if not already selected
+        if (isInfoSelected === 'true') {
+          router.replace('/homedashboard');
+        } else {
+          router.replace('/select_outlet');
+        }
       } else {
-        router.replace('/select_outlet');
+        // Fallback to previous behavior if no accountType stored
+        if (isInfoSelected === 'true') {
+          router.replace('/homedashboard');
+        } else {
+          router.replace('/select_outlet');
+        }
       }
       return;
     }
@@ -100,13 +114,19 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await simulateLogin(userId.trim(), password.trim());
-      router.replace('/select_outlet');
+      await SecureStore.setItemAsync(STORAGE_KEYS.accountType, accountType);
+      if (accountType === 'Member') {
+        router.replace('/MemberDashboard');
+      } else {
+        // Staff should go to select_outlet first
+        router.replace('/select_outlet');
+      }
     } catch  {
       Alert.alert('Login failed', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [password, simulateLogin, userId, validatePassword, validateUserId]);
+  }, [accountType, password, simulateLogin, userId, validatePassword, validateUserId]);
 
   const canSubmit = useMemo(() => !loading, [loading]);
 

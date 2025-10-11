@@ -14,6 +14,7 @@ type OrderData = {
   tableNo: string;
   waiterId: string;
   waiterName: string;
+  serviceType?: 'DINING_IN' | 'TAKE_AWAY';
   cartItems: {
     id: number;
     name: string;
@@ -118,6 +119,29 @@ export default function OrderDetailsScreen() {
         }
       ]
     );
+  };
+
+  const handleEditOrder = () => {
+    if (order) {
+      router.push({
+        pathname: '/course_menu_item',
+        params: {
+          order_number: order.orderNumber,
+          member_id: order.memberId,
+          member_type: order.memberType,
+          pax: order.pax,
+          member_name: order.memberName,
+          table_no: order.tableNo,
+          order_type: order.serviceType === 'DINING_IN' ? 'Dining In' : 'Take Away',
+          waiter_id: order.waiterId,
+          waiter_name: order.waiterName,
+          cart_total: String(order.grandTotal),
+          cart_count: String(order.itemCount),
+          cart_items: JSON.stringify(order.cartItems),
+          is_edit_mode: 'true'
+        }
+      });
+    }
   };
 
   if (loading) {
@@ -246,10 +270,18 @@ export default function OrderDetailsScreen() {
             <Ionicons name="print" size={24} color="#6B7280" />
             <Text style={styles.actionBtnText}>Print</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.closeBtn]} onPress={handleCloseOrder}>
-            <Ionicons name="close-circle" size={24} color="#EF4444" />
-            <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Close Order</Text>
-          </TouchableOpacity>
+          {order.status === 'Processed' && (
+            <TouchableOpacity style={[styles.actionBtn, styles.editBtn]} onPress={handleEditOrder}>
+              <Ionicons name="create" size={24} color="#3B82F6" />
+              <Text style={[styles.actionBtnText, { color: '#3B82F6' }]}>Edit Order</Text>
+            </TouchableOpacity>
+          )}
+          {order.status !== 'Closed' && (
+            <TouchableOpacity style={[styles.actionBtn, styles.closeBtn]} onPress={handleCloseOrder}>
+              <Ionicons name="close-circle" size={24} color="#EF4444" />
+              <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Close Order</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ height: 24 }} />
@@ -497,6 +529,9 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     backgroundColor: '#FEF2F2',
+  },
+  editBtn: {
+    backgroundColor: '#EFF6FF',
   },
   actionBtnText: {
     fontSize: 14,

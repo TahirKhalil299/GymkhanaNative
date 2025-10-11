@@ -19,6 +19,8 @@ type Params = {
   cart_total?: string;
   cart_count?: string;
   cart_items?: string;
+  is_edit_mode?: string;
+  restaurant_name?: string;
 };
 
 export default function CourseMenuScreen() {
@@ -35,6 +37,11 @@ export default function CourseMenuScreen() {
   const orderType = params.order_type ?? '';
   const waiterId = params.waiter_id ?? '';
   const waiterName = params.waiter_name ?? '';
+  const isEditMode = params.is_edit_mode === 'true';
+  const restaurantName = params.restaurant_name ?? '';
+  
+  // Check if this is a member order (simplified UI)
+  const isMemberOrder = memberType === 'MEMBER' || restaurantName !== '';
 
   // Courses
   const courses: Course[] = useMemo(() => getSampleCourses(), []);
@@ -47,11 +54,37 @@ export default function CourseMenuScreen() {
     return src.map(i => ({ id: i.id, code: String(i.id), name: i.name, price: i.price }));
   }, [selectedCourse]);
 
-  type SimpleCartItem = { id: number; name: string; price: number; quantity: number };
+  type SimpleCartItem = { id: number; name: string; price: number; quantity: number; isExisting?: boolean };
+  // Merge helper to avoid duplicate entries for same item id
+  const mergeItems = (base: SimpleCartItem[], added: SimpleCartItem[]) => {
+    const map = new Map<number, SimpleCartItem>();
+    for (const it of base) {
+      map.set(it.id, { ...it });
+    }
+    for (const it of added) {
+      const prev = map.get(it.id);
+      if (prev) {
+        map.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
+      } else {
+        map.set(it.id, { ...it });
+      }
+    }
+    return Array.from(map.values());
+  };
   const initialItems: SimpleCartItem[] = useMemo(() => {
     try { return params.cart_items ? JSON.parse(String(params.cart_items)) as SimpleCartItem[] : []; } catch { return []; }
   }, [params.cart_items]);
-  const [cartItems, setCartItems] = useState<SimpleCartItem[]>(initialItems);
+  
+  // In edit mode, mark existing items as non-removable
+  const processedInitialItems = useMemo(() => {
+    if (isEditMode) {
+      return initialItems.map(item => ({ ...item, isExisting: true }));
+    }
+    return initialItems;
+  }, [initialItems, isEditMode]);
+  
+  const [existingItems] = useState<SimpleCartItem[]>(processedInitialItems);
+  const [cartItems, setCartItems] = useState<SimpleCartItem[]>([]);
   const [cartCount, setCartCount] = useState(Number(params.cart_count ?? (initialItems.reduce((s, i) => s + i.quantity, 0))));
   const [cartTotal, setCartTotal] = useState(Number(params.cart_total ?? (initialItems.reduce((s, i) => s + i.price * i.quantity, 0))));
   const showBottomCart = cartCount > 0;
@@ -61,9 +94,11 @@ export default function CourseMenuScreen() {
   useEffect(() => {
     try {
       const parsed: SimpleCartItem[] = params.cart_items ? JSON.parse(String(params.cart_items)) : [];
-      setCartItems(parsed);
-      const newCount = Number(params.cart_count ?? (parsed.reduce((s, i) => s + i.quantity, 0)));
-      const newTotal = Number(params.cart_total ?? (parsed.reduce((s, i) => s + i.price * i.quantity, 0)));
+      // When navigating back from cart during edit, split items: keep existing in existingItems, load only new items into cartItems
+      const onlyNew = parsed.filter(i => !i.isExisting);
+      setCartItems(onlyNew);
+      const newCount = Number(params.cart_count ?? (onlyNew.reduce((s, i) => s + i.quantity, 0)));
+      const newTotal = Number(params.cart_total ?? (onlyNew.reduce((s, i) => s + i.price * i.quantity, 0)));
       setCartCount(newCount);
       setCartTotal(newTotal);
     } catch {}
@@ -102,7 +137,11 @@ export default function CourseMenuScreen() {
     });
   };
 
-  const getQty = (id: number) => cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+  const getQty = (id: number) => {
+    const existingQty = existingItems.find(ci => ci.id === id)?.quantity ?? 0;
+    const newQty = cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+    return existingQty + newQty;
+  };
 
   return (
     <SafeAreaView style={styles.scaffold} edges={['top', 'left', 'right', 'bottom']}>
@@ -111,11 +150,14 @@ export default function CourseMenuScreen() {
         <TouchableOpacity style={styles.backBtn} activeOpacity={0.9} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
-        <Text style={styles.title}>Select Menu</Text>
+        <Text style={styles.title}>
+          {isMemberOrder ? (restaurantName || 'Select Menu') : 'Select Menu'}
+        </Text>
         <View style={{ flex: 1 }} />
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={() => {
+            const allItems = mergeItems(existingItems, cartItems);
             router.replace({
               pathname: '/cart',
               params: {
@@ -130,7 +172,9 @@ export default function CourseMenuScreen() {
                 waiter_name: waiterName,
                 cart_total: String(cartTotal),
                 cart_count: String(cartCount),
-                cart_items: JSON.stringify(cartItems),
+                cart_items: JSON.stringify(allItems),
+                is_edit_mode: String(isEditMode),
+                restaurant_name: restaurantName,
               },
             });
           }}
@@ -142,21 +186,23 @@ export default function CourseMenuScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.orderInfo}>
-        <View style={styles.infoCols}>
-          <View style={styles.infoColLeft}>
-            <Text style={styles.infoText} numberOfLines={1}>Order No: {orderNumber}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Member Type: {memberType}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Member Name: {memberName}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Order Type: {orderType}</Text>
-          </View>
-          <View style={styles.infoColRight}>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>PAX: {pax}</Text>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Table No: {tableNo}</Text>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Member ID: {memberId}</Text>
+      {!isMemberOrder && (
+        <View style={styles.orderInfo}>
+          <View style={styles.infoCols}>
+            <View style={styles.infoColLeft}>
+              <Text style={styles.infoText} numberOfLines={1}>Order No: {orderNumber}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Member Type: {memberType}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Member Name: {memberName}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Order Type: {orderType}</Text>
+            </View>
+            <View style={styles.infoColRight}>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>PAX: {pax}</Text>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Table No: {tableNo}</Text>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Member ID: {memberId}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Select Menu Heading */}
       <View style={styles.selectMenuContainer}>
@@ -243,6 +289,7 @@ export default function CourseMenuScreen() {
             style={styles.viewOrderBar}
             activeOpacity={0.9}
             onPress={() => {
+            const allItems = mergeItems(existingItems, cartItems);
             router.replace({
                 pathname: '/cart',
                 params: {
@@ -257,7 +304,9 @@ export default function CourseMenuScreen() {
                   waiter_name: waiterName,
                   cart_total: String(cartTotal),
                   cart_count: String(cartCount),
-                  cart_items: JSON.stringify(cartItems),
+                  cart_items: JSON.stringify(allItems),
+                  is_edit_mode: String(isEditMode),
+                  restaurant_name: restaurantName,
                 },
               });
             }}
