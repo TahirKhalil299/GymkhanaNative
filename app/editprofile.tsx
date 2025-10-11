@@ -21,11 +21,11 @@ const genderOptions: DropdownOption[] = [
 const EditProfileInner: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
-    name: 'Capt Farrukh Atiq Khan. Retd.',
+    name: 'Tahir',
     phoneNumber: '03333873087',
-    email: 'Farruhatiq@gmail.com',
-    address: '123, Shadman, GOR-',
-    organization: 'Services & General Administrative Department',
+    email: 'tahir@gmail.com',
+    address: '123, Model Town',
+    organization: 'Soft Consults',
     gender: 'Male',
   });
 

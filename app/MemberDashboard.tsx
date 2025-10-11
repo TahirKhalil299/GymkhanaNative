@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
 import {
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -57,6 +57,10 @@ const MemberDashboard: React.FC = () => {
     }
     if (cardName === 'Profile') {
       router.push('/memberinfo');
+      return;
+    }
+    if (cardName === 'Take Away') {
+      router.push('/takeaway');
       return;
     }
     console.log(`${cardName} pressed`);

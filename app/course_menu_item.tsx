@@ -20,6 +20,7 @@ type Params = {
   cart_count?: string;
   cart_items?: string;
   is_edit_mode?: string;
+  restaurant_name?: string;
 };
 
 export default function CourseMenuScreen() {
@@ -37,6 +38,10 @@ export default function CourseMenuScreen() {
   const waiterId = params.waiter_id ?? '';
   const waiterName = params.waiter_name ?? '';
   const isEditMode = params.is_edit_mode === 'true';
+  const restaurantName = params.restaurant_name ?? '';
+  
+  // Check if this is a member order (simplified UI)
+  const isMemberOrder = memberType === 'MEMBER' || restaurantName !== '';
 
   // Courses
   const courses: Course[] = useMemo(() => getSampleCourses(), []);
@@ -145,7 +150,9 @@ export default function CourseMenuScreen() {
         <TouchableOpacity style={styles.backBtn} activeOpacity={0.9} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
-        <Text style={styles.title}>Select Menu</Text>
+        <Text style={styles.title}>
+          {isMemberOrder ? (restaurantName || 'Select Menu') : 'Select Menu'}
+        </Text>
         <View style={{ flex: 1 }} />
         <TouchableOpacity
           style={styles.cartBtn}
@@ -167,6 +174,7 @@ export default function CourseMenuScreen() {
                 cart_count: String(cartCount),
                 cart_items: JSON.stringify(allItems),
                 is_edit_mode: String(isEditMode),
+                restaurant_name: restaurantName,
               },
             });
           }}
@@ -178,21 +186,23 @@ export default function CourseMenuScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.orderInfo}>
-        <View style={styles.infoCols}>
-          <View style={styles.infoColLeft}>
-            <Text style={styles.infoText} numberOfLines={1}>Order No: {orderNumber}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Member Type: {memberType}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Member Name: {memberName}</Text>
-            <Text style={styles.infoText} numberOfLines={1}>Order Type: {orderType}</Text>
-          </View>
-          <View style={styles.infoColRight}>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>PAX: {pax}</Text>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Table No: {tableNo}</Text>
-            <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Member ID: {memberId}</Text>
+      {!isMemberOrder && (
+        <View style={styles.orderInfo}>
+          <View style={styles.infoCols}>
+            <View style={styles.infoColLeft}>
+              <Text style={styles.infoText} numberOfLines={1}>Order No: {orderNumber}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Member Type: {memberType}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Member Name: {memberName}</Text>
+              <Text style={styles.infoText} numberOfLines={1}>Order Type: {orderType}</Text>
+            </View>
+            <View style={styles.infoColRight}>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>PAX: {pax}</Text>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Table No: {tableNo}</Text>
+              <Text style={[styles.infoText, styles.infoRight]} numberOfLines={1}>Member ID: {memberId}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Select Menu Heading */}
       <View style={styles.selectMenuContainer}>
@@ -296,6 +306,7 @@ export default function CourseMenuScreen() {
                   cart_count: String(cartCount),
                   cart_items: JSON.stringify(allItems),
                   is_edit_mode: String(isEditMode),
+                  restaurant_name: restaurantName,
                 },
               });
             }}

@@ -1,30 +1,38 @@
-import React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, Stack, useFocusEffect } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  StatusBar,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const OrderItem = ({ name, membership, totalBill, status }) => (
+const OrderItem = ({ orderNumber, memberName, memberId, totalBill, status, restaurantName, timestamp }) => (
   <View style={styles.orderCard}>
     <View style={styles.orderHeader}>
       <View style={styles.orderInfo}>
-        <Text style={styles.orderName}>{name}</Text>
-        <Text style={styles.membership}>Membership: {membership}</Text>
-        <Text style={styles.totalBill}>Total Bill: {totalBill}</Text>
+        <Text style={styles.orderName}>{memberName || 'Member'}</Text>
+        <Text style={styles.membership}>Order: {orderNumber}</Text>
+        <Text style={styles.restaurantName}>Restaurant: {restaurantName || 'N/A'}</Text>
+        <Text style={styles.totalBill}>Total: Rs. {totalBill}</Text>
+        <Text style={styles.timestamp}>{new Date(timestamp).toLocaleString()}</Text>
       </View>
       <View style={styles.statusContainer}>
-        {status === 'Active' ? (
+        {status === 'Pending' ? (
           <View style={styles.activeStatus}>
-            <Text style={styles.activeStatusText}>✓ Active</Text>
+            <Text style={styles.activeStatusText}>⏳ Pending</Text>
+          </View>
+        ) : status === 'Complete' ? (
+          <View style={styles.completeStatus}>
+            <Text style={styles.completeStatusText}>✅ Complete</Text>
           </View>
         ) : (
-          <View style={styles.completeStatus}>
-            <Text style={styles.completeStatusText}>🎯 Complete</Text>
+          <View style={styles.activeStatus}>
+            <Text style={styles.activeStatusText}>🔄 {status}</Text>
           </View>
         )}
       </View>
@@ -33,48 +41,57 @@ const OrderItem = ({ name, membership, totalBill, status }) => (
 );
 
 export default function Takeaway() {
-  const orders = [
-    {
-      id: 1,
-      name: 'Capt Farrukh Atiq Khan. Retd.',
-      membership: 'R-0050',
-      totalBill: 300,
-      status: 'Active',
-    },
-    {
-      id: 2,
-      name: 'Capt Farrukh Atiq Khan. Retd.',
-      membership: 'R-0050',
-      totalBill: 790,
-      status: 'Complete',
-    },
-    {
-      id: 3,
-      name: 'Capt Farrukh Atiq Khan. Retd.',
-      membership: 'R-0050',
-      totalBill: 875,
-      status: 'Complete',
-    },
-    {
-      id: 4,
-      name: 'Capt Farrukh Atiq Khan. Retd.',
-      membership: 'R-0050',
-      totalBill: 600,
-      status: 'Complete',
-    },
-  ];
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadOrders();
+    }, [])
+  );
+
+  const loadOrders = async () => {
+    try {
+      const savedOrders = await AsyncStorage.getItem('allOrders');
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        // Filter orders for takeaway/member orders
+        const takeawayOrders = parsedOrders.filter(order => 
+          order.serviceType === 'TAKE_AWAY' || order.memberType === 'MEMBER' || order.restaurantName
+        );
+        setOrders(takeawayOrders);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Orders</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity 
+          style={styles.refreshButton}
+          onPress={loadOrders}
+        >
+          <Text style={styles.refreshText}>↻</Text>
+        </TouchableOpacity>
       </View>
 
       {/* View Food Policy Link */}
@@ -90,20 +107,37 @@ export default function Takeaway() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {orders.map((order) => (
-          <OrderItem
-            key={order.id}
-            name={order.name}
-            membership={order.membership}
-            totalBill={order.totalBill}
-            status={order.status}
-          />
-        ))}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading orders...</Text>
+          </View>
+        ) : orders.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No orders found</Text>
+            <Text style={styles.emptySubtext}>Place your first order using the NEW ORDER button</Text>
+          </View>
+        ) : (
+          orders.map((order, index) => (
+            <OrderItem
+              key={order.orderNumber || index}
+              orderNumber={order.orderNumber}
+              memberName={order.memberName}
+              memberId={order.memberId}
+              totalBill={order.grandTotal}
+              status={order.status}
+              restaurantName={order.restaurantName}
+              timestamp={order.timestamp}
+            />
+          ))
+        )}
       </ScrollView>
 
       {/* New Order Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.newOrderButton}>
+        <TouchableOpacity 
+          style={styles.newOrderButton}
+          onPress={() => router.push('/restaurant')}
+        >
           <Text style={styles.newOrderButtonText}>NEW ORDER</Text>
         </TouchableOpacity>
       </View>
@@ -114,7 +148,7 @@ export default function Takeaway() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
@@ -122,34 +156,50 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#D84315',
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
   },
   backArrow: {
-    fontSize: 24,
-    color: '#333',
+    fontSize: 20,
+    color: '#D84315',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#ffffff',
   },
   placeholder: {
     width: 40,
+  },
+  refreshButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+  },
+  refreshText: {
+    fontSize: 18,
+    color: '#D84315',
+    fontWeight: 'bold',
   },
   policyContainer: {
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingBottom: 12,
+    backgroundColor: '#D84315',
   },
   policyLink: {
     fontSize: 14,
-    color: '#00bcd4',
+    color: '#ffffff',
     fontWeight: '500',
   },
   scrollView: {
@@ -166,9 +216,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#D84315',
   },
   orderHeader: {
     flexDirection: 'row',
@@ -178,58 +230,104 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
     marginBottom: 4,
   },
   membership: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    color: '#6B7280',
+    marginBottom: 4,
   },
   totalBill: {
     fontSize: 14,
-    color: '#999',
+    color: '#D84315',
+    fontWeight: '600',
   },
   statusContainer: {
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
   },
   activeStatus: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 6,
   },
   activeStatusText: {
-    fontSize: 14,
-    color: '#4caf50',
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '600',
   },
   completeStatus: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#DCFCE7',
+    borderRadius: 6,
   },
   completeStatusText: {
-    fontSize: 14,
-    color: '#ff9800',
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#16A34A',
+    fontWeight: '600',
   },
   buttonContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   newOrderButton: {
-    backgroundColor: '#00bcd4',
+    backgroundColor: '#D84315',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#D84315',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   newOrderButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: 1,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  restaurantName: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  timestamp: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
 });

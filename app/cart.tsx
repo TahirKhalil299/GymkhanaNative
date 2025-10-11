@@ -20,6 +20,7 @@ type Params = {
   cart_count?: string;
   cart_items?: string;
   is_edit_mode?: string;
+  restaurant_name?: string;
 };
 
 export default function CartScreen() {
@@ -34,6 +35,7 @@ export default function CartScreen() {
   const initialGrand = Number(params.cart_total ?? 0);
   const initialCount = Number(params.cart_count ?? 0);
   const isEditMode = params.is_edit_mode === 'true';
+  const restaurantName = params.restaurant_name ?? '';
   
   type SimpleCartItem = { id: number; name: string; price: number; quantity: number; isExisting?: boolean };
   const initialItems: SimpleCartItem[] = (() => {
@@ -122,6 +124,7 @@ export default function CartScreen() {
         cart_count: String(itemCount),
         cart_items: JSON.stringify(allItems),
         is_edit_mode: String(isEditMode),
+        restaurant_name: restaurantName,
       }
     });
   };
@@ -269,7 +272,9 @@ export default function CartScreen() {
               console.log('Order validation - params:', {
                 order_number: params.order_number,
                 member_id: params.member_id,
+                member_type: params.member_type,
                 table_no: params.table_no,
+                restaurant_name: restaurantName,
                 allItemsLength: allItems.length,
                 cartItemsLength: safeCartItems.length,
                 existingItemsLength: safeExistingItems.length
@@ -375,7 +380,8 @@ export default function CartScreen() {
                   itemCount: itemCount,
                   timestamp: originalTimestamp, // Preserve original timestamp
                   status: 'Pending', // Set back to Pending so it appears in KOT
-                  outletName: outletName
+                  outletName: outletName,
+                  restaurantName: restaurantName
                 };
                 
                 console.log('Updated order data:', finalOrderData);
@@ -404,7 +410,8 @@ export default function CartScreen() {
                 itemCount: itemCount,
                 timestamp: new Date().toISOString(),
                 status: 'Pending',
-                outletName: outletName
+                outletName: outletName,
+                restaurantName: restaurantName
               };
               
                 console.log('New order data:', finalOrderData);
@@ -417,13 +424,17 @@ export default function CartScreen() {
               // Also keep currentOrder for backward compatibility
               await AsyncStorage.setItem('currentOrder', JSON.stringify(finalOrderData));
               
+              // Determine where to redirect based on user type
+              const isMemberOrder = (params.member_type === 'MEMBER') || restaurantName !== '';
+              const redirectPath = isMemberOrder ? '/takeaway' : '/homedashboard';
+              
               Alert.alert(
                 isEditMode ? 'Order Updated!' : 'Order Placed!',
                 isEditMode ? 'Your order has been updated successfully.' : 'Your order has been placed successfully.',
                 [
                   {
                     text: 'OK',
-                    onPress: () => router.replace('/homedashboard')
+                    onPress: () => router.replace(redirectPath)
                   }
                 ]
               );
