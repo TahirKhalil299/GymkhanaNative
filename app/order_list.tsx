@@ -55,6 +55,7 @@ export default function OrderList() {
         setOrders([]);
       }
     } catch (e) {
+      console.error('Error loading orders:', e);
       setOrders([]);
     }
   };

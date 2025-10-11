@@ -13,7 +13,8 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/Feather';
+import { Feather as Icon } from '@expo/vector-icons';
+
 
 const RoomBookDetailsContent = () => {
   const insets = useSafeAreaInsets();
@@ -25,8 +26,8 @@ const RoomBookDetailsContent = () => {
   const [guestMobile, setGuestMobile] = useState('');
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectingCheckOut, setSelectingCheckOut] = useState(false);
 
   const categories = ['Deluxe', 'Suite'];
