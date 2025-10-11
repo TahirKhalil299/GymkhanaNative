@@ -11,7 +11,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const OrderItem = ({ orderNumber, memberName, memberId, totalBill, status, restaurantName, timestamp }) => (
+interface OrderItemProps {
+  orderNumber: string;
+  memberName: string;
+  memberId: string;
+  totalBill: number;
+  status: string;
+  restaurantName: string;
+  timestamp: string;
+}
+
+const OrderItem = ({ orderNumber, memberName, memberId, totalBill, status, restaurantName, timestamp }: OrderItemProps) => (
   <View style={styles.orderCard}>
     <View style={styles.orderHeader}>
       <View style={styles.orderInfo}>
@@ -40,8 +50,20 @@ const OrderItem = ({ orderNumber, memberName, memberId, totalBill, status, resta
   </View>
 );
 
+interface Order {
+  orderNumber: string;
+  memberName: string;
+  memberId: string;
+  grandTotal: number;
+  status: string;
+  restaurantName: string;
+  timestamp: string;
+  serviceType: string;
+  memberType: string;
+}
+
 export default function Takeaway() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,7 +82,7 @@ export default function Takeaway() {
       if (savedOrders) {
         const parsedOrders = JSON.parse(savedOrders);
         // Filter orders for takeaway/member orders
-        const takeawayOrders = parsedOrders.filter(order => 
+        const takeawayOrders = parsedOrders.filter((order: Order) => 
           order.serviceType === 'TAKE_AWAY' || order.memberType === 'MEMBER' || order.restaurantName
         );
         setOrders(takeawayOrders);
@@ -117,7 +139,7 @@ export default function Takeaway() {
             <Text style={styles.emptySubtext}>Place your first order using the NEW ORDER button</Text>
           </View>
         ) : (
-          orders.map((order, index) => (
+           orders.map((order: Order, index: number) => (
             <OrderItem
               key={order.orderNumber || index}
               orderNumber={order.orderNumber}

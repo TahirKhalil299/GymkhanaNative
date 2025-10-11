@@ -1,12 +1,12 @@
 import { router, Stack } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,7 +16,12 @@ interface MessOption {
   icon: string;
 }
 
-const MessCard = ({ name, onPress }) => (
+interface MessCardProps {
+  name: string;
+  onPress: () => void;
+}
+
+const MessCard = ({ name, onPress }: MessCardProps) => (
   <TouchableOpacity style={styles.messCard} onPress={onPress}>
     <View style={styles.iconContainer}>
       <Text style={styles.icon}>👤</Text>
@@ -94,7 +99,7 @@ export default function Restaurant() {
       </ScrollView>
     </SafeAreaView>
   );
-}
+}``
 
 const styles = StyleSheet.create({
   container: {
