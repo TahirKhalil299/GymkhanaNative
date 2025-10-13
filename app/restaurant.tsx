@@ -1,5 +1,6 @@
 import { router, Stack } from 'expo-router';
 import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   ScrollView,
   StatusBar,
@@ -73,7 +74,7 @@ export default function Restaurant() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Text style={styles.backArrow}>←</Text>
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New Order</Text>
         <View style={styles.placeholder} />
@@ -99,7 +100,7 @@ export default function Restaurant() {
       </ScrollView>
     </SafeAreaView>
   );
-}``
+}
 
 const styles = StyleSheet.create({
   container: {

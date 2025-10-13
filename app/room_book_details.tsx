@@ -1,4 +1,5 @@
 // room_book_details.tsx
+import { Feather as Icon, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -13,7 +14,6 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather as Icon } from '@expo/vector-icons';
 
 
 const RoomBookDetailsContent = () => {
@@ -92,12 +92,12 @@ const RoomBookDetailsContent = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#D84315" />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Icon name="arrow-left" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Room Booking</Text>
         <View style={styles.headerPlaceholder} />
@@ -143,7 +143,7 @@ const RoomBookDetailsContent = () => {
                     )
                   }
                 >
-                  <Icon name="chevron-left" size={24} color="#00a8cc" />
+              <Icon name="chevron-left" size={24} color="#D84315" />
                 </TouchableOpacity>
                 <Text style={styles.calendarTitle}>{monthName}</Text>
                 <TouchableOpacity
@@ -153,7 +153,7 @@ const RoomBookDetailsContent = () => {
                     )
                   }
                 >
-                  <Icon name="chevron-right" size={24} color="#00a8cc" />
+              <Icon name="chevron-right" size={24} color="#D84315" />
                 </TouchableOpacity>
               </View>
 
@@ -364,17 +364,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#D84315',
+    borderBottomWidth: 0,
   },
   backButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: '#fff',
   },
   headerPlaceholder: {
     width: 32,
@@ -400,7 +404,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#fff',
     borderWidth: 1.5,
-    borderColor: '#00a8cc',
+    borderColor: '#D84315',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -463,7 +467,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   selectedDay: {
-    backgroundColor: '#00a8cc',
+    backgroundColor: '#D84315',
     borderRadius: 6,
   },
   selectedDayText: {
@@ -471,7 +475,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   betweenDay: {
-    backgroundColor: '#c5e9f4',
+    backgroundColor: '#fde7e0',
     borderRadius: 4,
   },
   dateInfoContainer: {
@@ -492,7 +496,7 @@ const styles = StyleSheet.create({
   dateValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#00a8cc',
+    color: '#D84315',
   },
   radioGroup: {
     flexDirection: 'row',
@@ -508,7 +512,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#00a8cc',
+    borderColor: '#D84315',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -516,7 +520,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#00a8cc',
+    backgroundColor: '#D84315',
   },
   radioLabel: {
     fontSize: 15,
@@ -557,10 +561,10 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#00a8cc',
+    color: '#D84315',
   },
   bookButton: {
-    backgroundColor: '#00a8cc',
+    backgroundColor: '#D84315',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',

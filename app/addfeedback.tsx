@@ -1,4 +1,5 @@
 // addfeedback.tsx
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -59,12 +60,12 @@ const AddFeedback = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor="#17a2b8" />
+      <StatusBar barStyle="light-content" backgroundColor="#D84315" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Feedback</Text>
       </View>
@@ -136,13 +137,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#17a2b8',
+    backgroundColor: '#D84315',
     paddingVertical: 16,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     marginRight: 16,
   },
   backButtonText: {
@@ -180,7 +187,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#17a2b8',
+    borderColor: '#D84315',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -189,7 +196,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#17a2b8',
+    backgroundColor: '#D84315',
   },
   categoryText: {
     fontSize: 16,
@@ -237,7 +244,7 @@ const styles = StyleSheet.create({
     minHeight: 150,
   },
   submitButton: {
-    backgroundColor: '#17a2b8',
+    backgroundColor: '#D84315',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',

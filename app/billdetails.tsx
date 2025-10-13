@@ -1,15 +1,16 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather as Icon } from '@expo/vector-icons';
+// removed unused Feather Icon import
 
 interface BillItem {
   id: string;
@@ -30,11 +31,11 @@ const BillDetailsContent = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#D84315" />
 
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Icon name="arrow-left" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bill Details</Text>
         <View style={styles.headerPlaceholder} />
@@ -83,17 +84,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#D84315',
+    borderBottomWidth: 0,
   },
   backButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: '#fff',
   },
   headerPlaceholder: {
     width: 32,
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   paidBadge: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: '#fde7e0',
   },
   unpaidBadge: {
     backgroundColor: '#fff5e6',
@@ -142,7 +147,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   paidText: {
-    color: '#00a8cc',
+    color: '#D84315',
   },
   unpaidText: {
     color: '#ff9500',
@@ -155,7 +160,7 @@ const styles = StyleSheet.create({
   billAmount: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#00a8cc',
+    color: '#D84315',
   },
 });
 

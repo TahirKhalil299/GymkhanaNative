@@ -1,4 +1,5 @@
 // room_details.tsx
+import { Feather as Icon, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,7 +12,6 @@ import {
     View
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather as Icon } from '@expo/vector-icons';
 
 interface BookingItem {
   id: string;
@@ -74,12 +74,12 @@ const RoomDetailsContent = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#D84315" />
       
       {/* Header with safe area */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Icon name="arrow-left" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Room Booking</Text>
         <View style={styles.headerPlaceholder} />
@@ -115,7 +115,7 @@ const RoomDetailsContent = () => {
                 <Icon 
                   name="file-text" 
                   size={14} 
-                  color={booking.status === 'Booked' ? '#00a8cc' : '#ff9500'} 
+                  color={booking.status === 'Booked' ? '#D84315' : '#F59E0B'} 
                 />
                 <Text style={[
                   styles.statusText,
@@ -131,7 +131,7 @@ const RoomDetailsContent = () => {
             )}
 
             <View style={styles.occupancyRow}>
-              <Icon name="users" size={16} color="#00a8cc" />
+              <Icon name="users" size={16} color="#D84315" />
               <Text style={styles.occupancy}>{booking.occupancy}</Text>
             </View>
 
@@ -169,17 +169,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#D84315',
+    borderBottomWidth: 0,
   },
   backButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: '#fff',
   },
   headerPlaceholder: {
     width: 32,
@@ -197,10 +201,10 @@ const styles = StyleSheet.create({
   tabTextActive: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#00a8cc',
+    color: '#D84315',
     paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: '#00a8cc',
+    borderBottomColor: '#D84315',
   },
   tabText: {
     fontSize: 14,
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff5e6',
   },
   bookedBadge: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: '#fde7e0',
   },
   statusText: {
     fontSize: 12,
@@ -258,7 +262,7 @@ const styles = StyleSheet.create({
     color: '#ff9500',
   },
   bookedText: {
-    color: '#00a8cc',
+    color: '#D84315',
   },
   roomNumber: {
     fontSize: 14,
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
   },
   occupancy: {
     fontSize: 14,
-    color: '#00a8cc',
+    color: '#D84315',
     fontWeight: '500',
   },
   dateRange: {
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
   },
   bookButton: {
-    backgroundColor: '#00a8cc',
+    backgroundColor: '#D84315',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

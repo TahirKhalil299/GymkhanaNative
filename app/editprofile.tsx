@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
@@ -65,7 +65,7 @@ const EditProfileInner: React.FC = () => {
       {/* Header with back and placeholder icon */}
       <View style={[styles.headerRow, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#0891b2" />
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Edit Profile</Text>
         <View style={{ width: 24 }} />
@@ -156,7 +156,7 @@ const EditProfileInner: React.FC = () => {
             <Feather
               name="chevron-down"
               size={20}
-              color="#0891b2"
+              color="#D84315"
               style={{ transform: [{ rotate: dropdownVisible ? '180deg' : '0deg' }] }}
             />
           </TouchableOpacity>
@@ -215,14 +215,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#D84315',
     paddingVertical: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerRow: {
-    backgroundColor: '#fff',
+    backgroundColor: '#D84315',
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 10,
@@ -231,13 +231,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backBtn: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
   },
   headerText: {
-    color: '#0891b2',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
   },
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#0891b2',
+    backgroundColor: '#D84315',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -294,7 +296,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0891b2',
+    borderColor: '#D84315',
   },
   dropdownText: {
     fontSize: 14,
@@ -309,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#0891b2',
+    borderColor: '#D84315',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -331,13 +333,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   viewOrderButton: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#D84315',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    shadowColor: '#0891b2',
+    shadowColor: '#D84315',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

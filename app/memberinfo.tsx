@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
@@ -111,8 +111,8 @@ const MemberInfo: React.FC = () => {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="chevron-left" size={24} color="#fff" />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={{ width: 24 }} />
@@ -121,7 +121,7 @@ const MemberInfo: React.FC = () => {
       {/* Profile Card */}
       <View style={styles.profileCard}>
         <View style={styles.avatarPlaceholder}>
-          <Feather name="user" size={64} color="#0891b2" />
+          <Feather name="user" size={64} color="#ffffff" />
         </View>
         <Text style={styles.profileName}>{profile.name}</Text>
         <TouchableOpacity style={styles.editButton} onPress={() => router.push('/editprofile')}>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#D84315',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
@@ -219,13 +219,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+  },
   headerTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
   },
   profileCard: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#D84315',
     paddingHorizontal: 20,
     paddingTop: 40,
     paddingBottom: 24,
@@ -344,7 +352,7 @@ const styles = StyleSheet.create({
   familyMemberCard: {
     backgroundColor: '#f9fafb',
     borderLeftWidth: 4,
-    borderLeftColor: '#0891b2',
+    borderLeftColor: '#D84315',
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 12,
@@ -372,12 +380,12 @@ const styles = StyleSheet.create({
   },
   familyRelation: {
     fontSize: 12,
-    color: '#0891b2',
+    color: '#D84315',
     fontWeight: '600',
     marginLeft: 8,
   },
   addMembersButton: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#D84315',
     paddingVertical: 14,
     borderRadius: 8,
     justifyContent: 'center',
