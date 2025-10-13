@@ -161,7 +161,7 @@ export default function OrderDetailsScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={20} color="#ffffff" />
+            <Ionicons name="arrow-back-outline" size={20} color="#D84315" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Order Details</Text>
         </View>
@@ -182,7 +182,7 @@ export default function OrderDetailsScreen() {
       
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={20} color="#ffffff" />
+          <Ionicons name="arrow-back-outline" size={20} color="#D84315" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Details</Text>
       </View>

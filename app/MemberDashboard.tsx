@@ -63,6 +63,10 @@ const MemberDashboard: React.FC = () => {
       router.push('/takeaway');
       return;
     }
+    if (cardName === 'Feedback') {
+      router.push('/feedbacklist');
+      return;
+    }
     console.log(`${cardName} pressed`);
   };
 

@@ -24,6 +24,8 @@ export default function RootLayout() {
         <Stack.Screen name="billdetails" options={{ title: 'Bill Details', headerShown: false }} />
         <Stack.Screen name="memberinfo" options={{ title: 'Member Info', headerShown: false }} />
         <Stack.Screen name="editprofile" options={{ title: 'Edit Profile', headerShown: false }} />
+        <Stack.Screen name="feedbacklist" options={{ title: 'Feedback', headerShown: false }} />
+        <Stack.Screen name="addfeedback" options={{ title: 'Add Feedback', headerShown: false }} />
 
 
       </Stack>

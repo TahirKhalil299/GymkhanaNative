@@ -71,11 +71,10 @@ const EditProfileInner: React.FC = () => {
         <View style={{ width: 24 }} />
       </View>
       <View style={styles.header}>
-        <View style={styles.moonContainer}>
-          <View style={styles.moonCircle}>
-            <Feather name="user" size={32} color="#fff" />
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatarCircle}>
+            <Feather name="user" size={36} color="#fff" />
           </View>
-          <View style={styles.moonDecoration} />
         </View>
       </View>
 
@@ -213,17 +212,17 @@ const EditProfile: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
     paddingVertical: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerRow: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 10,
@@ -242,36 +241,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  moonContainer: {
-    position: 'relative',
-    width: 80,
+  avatarContainer: {
+    width: 100,
     height: 100,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  moonCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  avatarCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#0891b2',
-    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0891b2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  moonDecoration: {
-    position: 'absolute',
-    top: 0,
-    left: -10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#0891b2',
-    backgroundColor: 'transparent',
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   formContainer: {
     paddingHorizontal: 20,

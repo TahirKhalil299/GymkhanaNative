@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SelectMemberDialog from './selectMemberDialog';
 
@@ -101,6 +102,7 @@ export default function HomeDashboardScreen() {
           onPress={() => router.push('/order_list')}
         />
 
+        {/* KOT Display hidden as per boss request - staff should not see this
         <DashboardCard
           color="#4798E8"
           gradient={["#E9F3FF", "#F2F8FF"]}
@@ -109,6 +111,25 @@ export default function HomeDashboardScreen() {
           titleColor="#4798E8"
           onPress={() => router.push('/kot_display')}
         />
+        */}
+
+        {/* Temporary button to clear corrupted orders - remove after clearing
+        <DashboardCard
+          color="#FF6B6B"
+          gradient={["#FFE9EB", "#FFF4F5"]}
+          iconName="delete"
+          title="Clear Corrupted Orders"
+          titleColor="#FF6B6B"
+          onPress={async () => {
+            try {
+              await AsyncStorage.removeItem('allOrders');
+              await AsyncStorage.removeItem('currentOrder');
+              Alert.alert('Success', 'All orders cleared! You can now create new orders without quantity doubling.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear orders: ' + error.message);
+            }
+          }}
+        /> */}
       </ScrollView>
 
       <SelectMemberDialog

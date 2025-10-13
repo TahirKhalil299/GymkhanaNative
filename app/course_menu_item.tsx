@@ -80,7 +80,8 @@ export default function CourseMenuScreen() {
     if (isEditMode) {
       return initialItems.map(item => ({ ...item, isExisting: true }));
     }
-    return initialItems;
+    // In normal (new) order flow, do not keep any existing items to avoid duplication
+    return [] as SimpleCartItem[];
   }, [initialItems, isEditMode]);
   
   const [existingItems] = useState<SimpleCartItem[]>(processedInitialItems);
@@ -138,9 +139,14 @@ export default function CourseMenuScreen() {
   };
 
   const getQty = (id: number) => {
-    const existingQty = existingItems.find(ci => ci.id === id)?.quantity ?? 0;
-    const newQty = cartItems.find(ci => ci.id === id)?.quantity ?? 0;
-    return existingQty + newQty;
+    // In edit mode, only show the quantity from cartItems (new additions)
+    // In normal mode, show the quantity from cartItems only (no duplication)
+    if (isEditMode) {
+      return cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+    } else {
+      // In normal mode, only show cartItems quantity to avoid duplication
+      return cartItems.find(ci => ci.id === id)?.quantity ?? 0;
+    }
   };
 
   return (
@@ -157,7 +163,7 @@ export default function CourseMenuScreen() {
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={() => {
-            const allItems = mergeItems(existingItems, cartItems);
+            const allItems = isEditMode ? mergeItems(existingItems, cartItems) : cartItems;
             router.replace({
               pathname: '/cart',
               params: {
@@ -289,7 +295,7 @@ export default function CourseMenuScreen() {
             style={styles.viewOrderBar}
             activeOpacity={0.9}
             onPress={() => {
-            const allItems = mergeItems(existingItems, cartItems);
+            const allItems = isEditMode ? mergeItems(existingItems, cartItems) : cartItems;
             router.replace({
                 pathname: '/cart',
                 params: {

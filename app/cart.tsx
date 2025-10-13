@@ -256,17 +256,19 @@ export default function CartScreen() {
               // Prepare safe arrays up-front to avoid undefined access
               const safeExistingItems = existingItems || [];
               const safeCartItems = cartItems || [];
-              // Merge duplicates by id
-              const mergedMap = new Map<number, SimpleCartItem>();
-              [...safeExistingItems, ...safeCartItems].forEach(it => {
-                const prev = mergedMap.get(it.id);
-                if (prev) {
-                  mergedMap.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
-                } else {
-                  mergedMap.set(it.id, { ...it });
-                }
-              });
-              const allItems = Array.from(mergedMap.values());
+              
+              // In edit mode, keep existing and new items separate
+              // In normal mode, use only cart items (existing items are already included)
+              let allItems: SimpleCartItem[];
+              
+              if (isEditMode) {
+                // Keep existing items as-is, and new items as-is (don't merge by ID)
+                allItems = [...safeExistingItems, ...safeCartItems];
+              } else {
+                // In normal mode, only use cart items to avoid duplication
+                // The existing items are already included in the cart items when they were first added
+                allItems = safeCartItems;
+              }
 
               // Validate required fields
               console.log('Order validation - params:', {

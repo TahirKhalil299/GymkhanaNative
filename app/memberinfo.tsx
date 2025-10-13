@@ -111,7 +111,7 @@ const MemberInfo: React.FC = () => {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
           <Feather name="chevron-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>

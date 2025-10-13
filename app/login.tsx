@@ -2,7 +2,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboard } from '../hooks/use-keyboard';
 
 const STORAGE_KEYS = {
   isLoggedIn: 'isLoggedIn',
@@ -22,6 +24,9 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [accountType, setAccountType] = useState<'Member' | 'Staff'>('Member');
+  const { isVisible: isKeyboardVisible, height: keyboardHeight } = useKeyboard();
+  const insets = useSafeAreaInsets();
+  const screenHeight = Dimensions.get('window').height;
 
   const validateUserId = useCallback((value: string) => {
     if (!value || value.trim().length === 0) return 'User ID cannot be empty';
@@ -130,78 +135,96 @@ export default function LoginScreen() {
 
   const canSubmit = useMemo(() => !loading, [loading]);
 
+  // Calculate dynamic bottom sheet height based on keyboard
+  const bottomSheetHeight = isKeyboardVisible 
+    ? Math.max(screenHeight - keyboardHeight - insets.top - 50, screenHeight * 0.4) // Minimum 40% of screen height
+    : screenHeight * 0.72; // 72% of screen height when keyboard is hidden
+
   return (
     <View style={styles.root}>
       {/* Top hero image */}
       <Image source={require('../assets/images/splash_background.png')} style={styles.hero} resizeMode="cover" />
 
-      {/* Bottom sheet container */}
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0} style={styles.bottomSheet}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+      {/* Bottom sheet container with dynamic height */}
+      <View style={[styles.bottomSheet, { height: bottomSheetHeight }]}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={styles.keyboardAvoidingView}
         >
-        <View style={styles.contentWrapper}>
-          <Text style={styles.headline}>Sign In to Your GymKhana Account</Text>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              isKeyboardVisible && Platform.OS === 'android' && {
+                paddingBottom: 20, // Extra padding for Android when keyboard is visible
+              }
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          >
+            <View style={styles.contentWrapper}>
+              <Text style={styles.headline}>Sign In to Your GymKhana Account</Text>
 
-          {/* Member/Staff selector (red theme) */}
-          <View style={styles.roleToggleContainer}>
-            <Pressable
-              onPress={() => setAccountType('Member')}
-              style={[styles.roleToggleItem, accountType === 'Member' && styles.roleToggleItemSelected]}
-            >
-              <Text style={[styles.roleToggleText, accountType === 'Member' && styles.roleToggleTextSelected]}>Member</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setAccountType('Staff')}
-              style={[styles.roleToggleItem, accountType === 'Staff' && styles.roleToggleItemSelected]}
-            >
-              <Text style={[styles.roleToggleText, accountType === 'Staff' && styles.roleToggleTextSelected]}>Staff</Text>
-            </Pressable>
-          </View>
+              {/* Member/Staff selector (red theme) */}
+              <View style={styles.roleToggleContainer}>
+                <Pressable
+                  onPress={() => setAccountType('Member')}
+                  style={[styles.roleToggleItem, accountType === 'Member' && styles.roleToggleItemSelected]}
+                >
+                  <Text style={[styles.roleToggleText, accountType === 'Member' && styles.roleToggleTextSelected]}>Member</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setAccountType('Staff')}
+                  style={[styles.roleToggleItem, accountType === 'Staff' && styles.roleToggleItemSelected]}
+                >
+                  <Text style={[styles.roleToggleText, accountType === 'Staff' && styles.roleToggleTextSelected]}>Staff</Text>
+                </Pressable>
+              </View>
 
-          <FloatingLabelInput
-            label={accountType === 'Staff' ? 'Staff Id*' : 'Member Id*'}
-            value={userId}
-            onChangeText={setUserId}
-            leftIcon="person"
-            errorText={emailError ?? undefined}
-            autoCapitalize="none"
-          />
+              <FloatingLabelInput
+                label={accountType === 'Staff' ? 'Staff Id*' : 'Member Id*'}
+                value={userId}
+                onChangeText={setUserId}
+                leftIcon="person"
+                errorText={emailError ?? undefined}
+                autoCapitalize="none"
+              />
 
-          <FloatingLabelInput
-            label="Password*"
-            value={password}
-            onChangeText={setPassword}
-            leftIcon="lock"
-            rightIconToggle={true}
-            secureEntry={!showPassword}
-            onToggleSecure={() => setShowPassword(s => !s)}
-            errorText={passwordError ?? undefined}
-          />
+              <FloatingLabelInput
+                label="Password*"
+                value={password}
+                onChangeText={setPassword}
+                leftIcon="lock"
+                rightIconToggle={true}
+                secureEntry={!showPassword}
+                onToggleSecure={() => setShowPassword(s => !s)}
+                errorText={passwordError ?? undefined}
+              />
 
-          {/* Keep me Logged-In */}
-          <View style={styles.rememberRow}>
-            <Pressable onPress={onToggleRemember} style={styles.checkboxRow}>
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
-              <Text style={styles.checkboxLabel}>Keep me Logged-In</Text>
-            </Pressable>
-          </View>
+              {/* Keep me Logged-In */}
+              <View style={styles.rememberRow}>
+                <Pressable onPress={onToggleRemember} style={styles.checkboxRow}>
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
+                  <Text style={styles.checkboxLabel}>Keep me Logged-In</Text>
+                </Pressable>
+              </View>
 
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity disabled={!canSubmit} onPress={onLogin} style={[styles.primaryButton, !canSubmit && styles.disabledButton]}>
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-              <MaterialIcons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
-            </TouchableOpacity>
-          </View>
+              <View style={styles.buttonsRow}>
+                <TouchableOpacity disabled={!canSubmit} onPress={onLogin} style={[styles.primaryButton, !canSubmit && styles.disabledButton]}>
+                  <Text style={styles.primaryButtonText}>Sign In</Text>
+                  <MaterialIcons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 8 }} />
+                </TouchableOpacity>
+              </View>
 
-          <Pressable onPress={() => { /* optional forgot password */ }} style={styles.forgotRow}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
-          </Pressable>
-        </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <Pressable onPress={() => { /* optional forgot password */ }} style={styles.forgotRow}>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
 
       {loading && (
         <View style={styles.overlay}>
@@ -237,7 +260,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    top: '28%',
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -246,6 +268,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowRadius: 8,
     elevation: 8,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -314,8 +339,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 2,
     marginTop: 14,
+    marginBottom: 16
   },
-  roleToggleItem: {
+  roleToggleItem: { 
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,

@@ -2,12 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, Stack, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -106,6 +106,9 @@ export default function Takeaway() {
           onPress={() => router.back()}
         >
           <Text style={styles.backArrow}>←</Text>
+
+
+          
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Orders</Text>
         <TouchableOpacity 
@@ -216,12 +219,13 @@ const styles = StyleSheet.create({
   policyContainer: {
     alignItems: 'flex-end',
     paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 12,
-    backgroundColor: '#D84315',
+    backgroundColor: '#ffffff',
   },
   policyLink: {
     fontSize: 14,
-    color: '#ffffff',
+    color: '#000000',
     fontWeight: '500',
   },
   scrollView: {
