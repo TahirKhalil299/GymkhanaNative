@@ -175,8 +175,8 @@ const MemberInfo: React.FC = () => {
         </View>
       </CollapsibleSection>
 
-      {/* Family Members Info Section */}
-      <CollapsibleSection
+      {/* Family Members Info Section - Hidden */}
+      {/* <CollapsibleSection
         title="Family Members Info"
         icon={<Feather name="heart" size={20} color="#000" />}
         isExpanded={expandedSections.family}
@@ -197,7 +197,7 @@ const MemberInfo: React.FC = () => {
         <TouchableOpacity style={styles.addMembersButton}>
           <Text style={styles.addMembersText}>+ Add New Members</Text>
         </TouchableOpacity>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
 
       <View style={{ height: 30 }} />
     </ScrollView>

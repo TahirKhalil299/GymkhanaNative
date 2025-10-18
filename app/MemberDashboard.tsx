@@ -1,4 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface DashboardCardProps {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   description: string;
   onPress: () => void;
@@ -28,7 +28,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.icon}>{icon}</Text>
+      <View style={styles.iconWrap}>{icon}</View>
       <Text style={styles.cardTitle}>{title}</Text>
       <Text style={styles.cardDescription}>{description}</Text>
     </TouchableOpacity>
@@ -88,13 +88,13 @@ const MemberDashboard: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top','left','right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#D84315" />
       
       {/* Header */}
        <View style={styles.header}>
               <Text style={styles.headerTitle}>GymKhana</Text>
           <TouchableOpacity onPress={onLogout} style={styles.logoutBtn}>
-            <MaterialIcons name="logout" size={25} color="#9c1c1cff" />
+            <MaterialIcons name="logout" size={20} color="#D84315" />
           </TouchableOpacity>
         </View>
 
@@ -115,13 +115,13 @@ const MemberDashboard: React.FC = () => {
         <View style={styles.cardsContainer}>
           <View style={styles.row}>
             <DashboardCard
-              icon="🛏️"
+              icon={<Ionicons name="bed-outline" size={26} color="#D84315" />}
               title="Room Booking"
               description="Effortlessly book your preferred room"
               onPress={() => handleCardPress('Room Booking')}
             />
             <DashboardCard
-              icon="🧾"
+              icon={<Ionicons name="receipt-outline" size={26} color="#D84315" />}
               title="View Bill"
               description="Track, manage, and organize your bills"
               onPress={() => handleCardPress('View Bill')}
@@ -130,13 +130,13 @@ const MemberDashboard: React.FC = () => {
 
           <View style={styles.row}>
             <DashboardCard
-              icon="🏢"
+              icon={<Ionicons name="business-outline" size={26} color="#D84315" />}
               title="Facilities"
               description="Discover and utilize available amenities"
               onPress={() => handleCardPress('Facilities')}
             />
             <DashboardCard
-              icon="🥡"
+              icon={<Ionicons name="fast-food-outline" size={26} color="#D84315" />}
               title="Take Away"
               description="Convenient grab-and-go dining options"
               onPress={() => handleCardPress('Take Away')}
@@ -145,13 +145,13 @@ const MemberDashboard: React.FC = () => {
 
           <View style={styles.row}>
             <DashboardCard
-              icon="👤"
+              icon={<Ionicons name="person-outline" size={26} color="#D84315" />}
               title="Profile"
               description="Customize and manage your personal preferences"
               onPress={() => handleCardPress('Profile')}
             />
             <DashboardCard
-              icon="💬"
+              icon={<Ionicons name="chatbubbles-outline" size={26} color="#D84315" />}
               title="Feedback"
               description="Share your thoughts and help us improve"
               onPress={() => handleCardPress('Feedback')}
@@ -166,29 +166,29 @@ const MemberDashboard: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
 
    logoutBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
+   width: 36,
+   height: 36,
+   borderRadius: 18,
+   backgroundColor: '#ffffff',
+   alignItems: 'center',
+   justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingVertical: 12,
+    backgroundColor: '#D84315',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   powerIcon: {
     fontSize: 28,
@@ -198,10 +198,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroBanner: {
-    height: 200,
+    height: 150,
     marginHorizontal: 16,
-    marginVertical: 16,
-    borderRadius: 16,
+    marginVertical: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -212,68 +212,68 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
     justifyContent: 'center',
     paddingLeft: 24,
-    top:110
+    top:90
   },
   heroSubtitle: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#fff',
-    fontWeight: '400',
+    fontWeight: '600',
     marginBottom: 4,
   },
   heroTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#fff',
     letterSpacing: 1,
   },
   cardsContainer: {
     paddingHorizontal: 8,
-    paddingBottom: 24,
+    paddingBottom: 16,
+    marginTop: 12,
   },
 
   
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   card: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 14,
     marginHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 180,
+    minHeight: 120,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
+  iconWrap: { marginBottom: 8 },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
     textAlign: 'center',
   },
   cardDescription: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
 

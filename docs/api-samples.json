@@ -1,0 +1,61 @@
+{
+  "memberInfo": {
+    "success": true,
+    "message": null,
+    "data": {
+      "memberId": "M001",
+      "memberName": "John Smith",
+      "memberType": "Club Member",
+      "phone": "9999999999",
+      "email": "john@example.com",
+      "isActive": true,
+      "balance": 1200.5
+    }
+  },
+  "menuList": {
+    "success": true,
+    "message": null,
+    "data": {
+      "outletName": "Main Restaurant",
+      "items": [
+        { "id": 1, "name": "Chicken Biryani", "description": "Aromatic...", "price": 250, "category": "Main Course", "isAvailable": true },
+        { "id": 2, "name": "Mutton Curry", "price": 180, "category": "Main Course", "isAvailable": true },
+        { "id": 3, "name": "Fish Fry", "description": "Crispy...", "price": 200, "category": "Starters", "isAvailable": false }
+      ]
+    }
+  },
+  "cart": {
+    "success": true,
+    "message": null,
+    "data": {
+      "orderNumber": "ORD20241201120000",
+      "memberId": "M001",
+      "memberType": "Club Member",
+      "memberName": "John Smith",
+      "tableNo": "Table 3",
+      "waiterId": "W01",
+      "waiterName": "Alice Johnson",
+      "serviceType": "DINING_IN",
+      "outletName": "Main Restaurant",
+      "items": [
+        { "id": 1, "name": "Chicken Biryani", "price": 250, "quantity": 2, "lineTotal": 500 },
+        { "id": 2, "name": "Mutton Curry", "price": 180, "quantity": 1, "lineTotal": 180 },
+        { "id": 999, "name": "Service Charge", "price": 50, "quantity": 1, "lineTotal": 50 },
+        { "id": 998, "name": "GST", "price": 25, "quantity": 1, "lineTotal": 25 }
+      ],
+      "subTotal": 680,
+      "tax": 25,
+      "serviceCharge": 50,
+      "grandTotal": 755,
+      "itemCount": 5,
+      "timestamp": "2025-10-16T08:20:00Z",
+      "status": "Processed"
+    }
+  }
+}
+
+
+
+
+
+

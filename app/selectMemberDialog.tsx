@@ -146,6 +146,7 @@ export default function SelectMemberDialog({
     }
     if (v === 'MEM123') {
       setMemberName('John Smith');
+      setGuestName('');
       setMemberDetail('Premium Member');
       setIdValid(true);
       return;

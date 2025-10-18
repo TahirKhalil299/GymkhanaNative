@@ -1,8 +1,8 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useState } from 'react';
-import { DeviceEventEmitter, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { DeviceEventEmitter, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DropdownOption {
@@ -20,6 +20,7 @@ const genderOptions: DropdownOption[] = [
 
 const EditProfileInner: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView | null>(null);
   const [formData, setFormData] = useState({
     name: 'Tahir',
     phoneNumber: '03333873087',
@@ -61,7 +62,18 @@ const EditProfileInner: React.FC = () => {
   // removed unused handleViewOrder
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.select({ ios: 'padding', default: 'height' })}
+      keyboardVerticalOffset={Platform.select({ ios: 64, android: 0 }) as number}
+    >
+    <ScrollView
+      ref={scrollRef}
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+      keyboardShouldPersistTaps="handled"
+    >
       {/* Header with back and placeholder icon */}
       <View style={[styles.headerRow, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -90,6 +102,7 @@ const EditProfileInner: React.FC = () => {
             value={formData.name}
             onChangeText={(value) => handleInputChange('name', value)}
             editable
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 120, animated: true }), 50)}
           />
         </View>
 
@@ -103,6 +116,7 @@ const EditProfileInner: React.FC = () => {
             value={formData.phoneNumber}
             onChangeText={(value) => handleInputChange('phoneNumber', value)}
             keyboardType="phone-pad"
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 200, animated: true }), 50)}
           />
         </View>
 
@@ -116,6 +130,7 @@ const EditProfileInner: React.FC = () => {
             value={formData.email}
             onChangeText={(value) => handleInputChange('email', value)}
             keyboardType="email-address"
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 280, animated: true }), 50)}
           />
         </View>
 
@@ -128,6 +143,7 @@ const EditProfileInner: React.FC = () => {
             placeholderTextColor="#999"
             value={formData.address}
             onChangeText={(value) => handleInputChange('address', value)}
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 360, animated: true }), 50)}
           />
         </View>
 
@@ -141,6 +157,7 @@ const EditProfileInner: React.FC = () => {
             value={formData.organization}
             onChangeText={(value) => handleInputChange('organization', value)}
             editable={false}
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 420, animated: true }), 50)}
           />
         </View>
 
@@ -151,6 +168,7 @@ const EditProfileInner: React.FC = () => {
             style={styles.dropdownButton}
             onPress={() => setDropdownVisible(!dropdownVisible)}
             activeOpacity={0.7}
+            onPressIn={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 480, animated: true }), 50)}
           >
             <Text style={styles.dropdownText}>{formData.gender}</Text>
             <Feather
@@ -198,6 +216,7 @@ const EditProfileInner: React.FC = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

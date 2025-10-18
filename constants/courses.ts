@@ -44,7 +44,7 @@ const courses: Course[] = [
       { id: 6003, name: 'Quattro Formaggi', price: 450.0 },
       { id: 6004, name: 'Truffle Mushroom', price: 520.0 },
       { id: 6005, name: 'BBQ Chicken', price: 460.0 },
-      { id: 6006, name: 'Vegetariana', price: 440.0 },
+      { id: 6006, name: 'Vegetariana', price: 440.0 },A
     ]},
     { id: 7, name: 'Gourmet Sandwiches', items: [
       { id: 7001, name: 'Club Sandwich', price: 280.0 },

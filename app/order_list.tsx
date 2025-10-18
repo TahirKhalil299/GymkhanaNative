@@ -44,15 +44,68 @@ export default function OrderList() {
   const loadOrders = async () => {
     try {
       const savedOrders = await AsyncStorage.getItem('allOrders');
+      let ordersData: OrderData[] = [];
+      
       if (savedOrders) {
-        const ordersData: OrderData[] = JSON.parse(savedOrders);
-        // Show orders that were processed from KOT or closed
-        const processed = ordersData
-          .filter(o => o.status === 'Processed' || o.status === 'Closed')
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        setOrders(processed);
+        ordersData = JSON.parse(savedOrders);
+      }
+      
+      // Show orders that were processed from KOT or closed
+      const processed = ordersData
+        .filter(o => o.status === 'Processed' || o.status === 'Closed')
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      // If no real orders, show 2 demo orders for staff demonstration
+      if (processed.length === 0) {
+        const demoOrders: OrderData[] = [
+          {
+            orderNumber: 'ORD20241201120000',
+            memberId: 'M001',
+            memberType: 'Club Member',
+            pax: '4',
+            memberName: 'John Smith',
+            tableNo: 'Table 3',
+            waiterId: 'W01',
+            waiterName: 'Alice Johnson',
+            serviceType: 'DINING_IN',
+            cartItems: [
+              { id: 1, name: 'Chicken Biryani', price: 250, quantity: 2 },
+              { id: 2, name: 'Mutton Curry', price: 180, quantity: 1 },
+              { id: 999, name: 'Service Charge', price: 50, quantity: 1 },
+              { id: 998, name: 'GST', price: 25, quantity: 1 }
+            ],
+            grandTotal: 705,
+            itemCount: 4,
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+            status: 'Closed',
+            outletName: 'Main Restaurant'
+          },
+          {
+            orderNumber: 'ORD20241201110000',
+            memberId: 'M002',
+            memberType: 'Guest',
+            pax: '2',
+            memberName: 'Sarah Wilson',
+            tableNo: 'Table 1',
+            waiterId: 'W02',
+            waiterName: 'Bob Brown',
+            serviceType: 'TAKE_AWAY',
+            cartItems: [
+              { id: 3, name: 'Fish Fry', price: 200, quantity: 1 },
+              { id: 4, name: 'Rice', price: 80, quantity: 2 },
+              { id: 999, name: 'Service Charge', price: 50, quantity: 1 },
+              { id: 998, name: 'GST', price: 25, quantity: 1 }
+            ],
+            grandTotal: 355,
+            itemCount: 4,
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
+            status: 'Closed',
+            outletName: 'Main Restaurant'
+          }
+        ];
+        setOrders(demoOrders);
       } else {
-        setOrders([]);
+        setOrders(processed);
       }
     } catch (e) {
       console.error('Error loading orders:', e);

@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Dimensions, Easing, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Dimensions, Easing, Image, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from '../components/keyboard-aware-scroll-view';
 import { useKeyboard } from '../hooks/use-keyboard';
 
 const STORAGE_KEYS = {
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const [accountType, setAccountType] = useState<'Member' | 'Staff'>('Member');
   const { isVisible: isKeyboardVisible, height: keyboardHeight } = useKeyboard();
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView | null>(null);
   const screenHeight = Dimensions.get('window').height;
 
   const validateUserId = useCallback((value: string) => {
@@ -136,35 +138,26 @@ export default function LoginScreen() {
   const canSubmit = useMemo(() => !loading, [loading]);
 
   // Calculate dynamic bottom sheet height based on keyboard
-  const bottomSheetHeight = isKeyboardVisible 
-    ? Math.max(screenHeight - keyboardHeight - insets.top - 50, screenHeight * 0.4) // Minimum 40% of screen height
-    : screenHeight * 0.72; // 72% of screen height when keyboard is hidden
+  // When keyboard is visible, expand the bottom sheet to fill the screen above the keyboard
+  const bottomSheetHeight = isKeyboardVisible
+    ? Math.max(screenHeight - keyboardHeight, screenHeight * 0.4)
+    : screenHeight * 0.72; // when keyboard is hidden
 
   return (
     <View style={styles.root}>
-      {/* Top hero image */}
-      <Image source={require('../assets/images/splash_background.png')} style={styles.hero} resizeMode="cover" />
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        keyboardVerticalOffset={0}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 0 }]}
+        bounces={false}
+        ref={scrollRef as unknown as React.RefObject<any>}
+      >
+        {/* Top hero image - now part of scroll so whole screen moves */}
+        <Image source={require('../assets/images/splash_background.png')} style={styles.hero} resizeMode="cover" />
 
-      {/* Bottom sheet container with dynamic height */}
-      <View style={[styles.bottomSheet, { height: bottomSheetHeight }]}>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-          style={styles.keyboardAvoidingView}
-        >
-          <ScrollView
-            contentContainerStyle={[
-              styles.scrollContent,
-              isKeyboardVisible && Platform.OS === 'android' && {
-                paddingBottom: 20, // Extra padding for Android when keyboard is visible
-              }
-            ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-          >
-            <View style={styles.contentWrapper}>
+        {/* Bottom sheet content */}
+        <View style={[styles.bottomSheet, { minHeight: bottomSheetHeight }]}>        
+          <View style={styles.contentWrapper}>
               <Text style={styles.headline}>Sign In to Your GymKhana Account</Text>
 
               {/* Member/Staff selector (red theme) */}
@@ -190,6 +183,10 @@ export default function LoginScreen() {
                 leftIcon="person"
                 errorText={emailError ?? undefined}
                 autoCapitalize="none"
+                onFocusExtra={() => {
+                  // Nudge the sheet up to reveal the first field above the keyboard
+                  setTimeout(() => scrollRef.current?.scrollTo({ y: 80, animated: true }), 50);
+                }}
               />
 
               <FloatingLabelInput
@@ -201,6 +198,10 @@ export default function LoginScreen() {
                 secureEntry={!showPassword}
                 onToggleSecure={() => setShowPassword(s => !s)}
                 errorText={passwordError ?? undefined}
+                onFocusExtra={() => {
+                  // Ensure password field is fully visible
+                  setTimeout(() => scrollRef.current?.scrollTo({ y: 220, animated: true }), 50);
+                }}
               />
 
               {/* Keep me Logged-In */}
@@ -221,10 +222,9 @@ export default function LoginScreen() {
               <Pressable onPress={() => { /* optional forgot password */ }} style={styles.forgotRow}>
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
 
       {loading && (
         <View style={styles.overlay}>
@@ -249,17 +249,11 @@ const styles = StyleSheet.create({
     opacity: 0.06,
   },
   hero: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    width: '100%',
     height: '40%',
   },
   bottomSheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -274,6 +268,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 16,
   },
   contentWrapper: {
     flex: 1,
@@ -430,10 +425,11 @@ type FloatingLabelInputProps = {
   onToggleSecure?: () => void;
   errorText?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  onFocusExtra?: () => void;
 };
 
 function FloatingLabelInput(props: FloatingLabelInputProps) {
-  const { label, value, onChangeText, leftIcon, rightIconToggle, secureEntry, onToggleSecure, errorText, autoCapitalize } = props;
+  const { label, value, onChangeText, leftIcon, rightIconToggle, secureEntry, onToggleSecure, errorText, autoCapitalize, onFocusExtra } = props;
 
   const [focused, setFocused] = useState(false);
   const animated = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -465,7 +461,7 @@ function FloatingLabelInput(props: FloatingLabelInputProps) {
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureEntry}
-          onFocus={() => setFocused(true)}
+          onFocus={() => { setFocused(true); onFocusExtra?.(); }}
           onBlur={() => setFocused(false)}
           autoCapitalize={autoCapitalize}
           style={[stylesField.input, leftIcon ? { paddingLeft: 40 } : null, rightIconToggle ? { paddingRight: 44 } : null]}

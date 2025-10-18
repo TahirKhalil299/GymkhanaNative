@@ -33,12 +33,14 @@ export const KeyboardAwareScrollView: React.FC<KeyboardAwareScrollViewProps> = (
         contentContainerStyle={[
           styles.contentContainer,
           contentContainerStyle,
-          isKeyboardVisible && Platform.OS === 'android' && {
-            paddingBottom: keyboardHeight - insets.bottom,
-          },
+          isKeyboardVisible
+            ? { paddingBottom: Math.max(0, keyboardHeight - insets.bottom) }
+            : { paddingBottom: 0 },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets
+        scrollEnabled
         {...props}
       >
         {children}

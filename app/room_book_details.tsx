@@ -3,6 +3,7 @@ import { Feather as Icon, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     DeviceEventEmitter,
     Modal,
     ScrollView,
@@ -20,7 +21,7 @@ const RoomBookDetailsContent = () => {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState('Please Select');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [bookingFor, setBookingFor] = useState<'Member' | 'Guest'>('Guest');
+  const [bookingFor, setBookingFor] = useState<'Member' | 'Guest'>('Member');
   const [guestName, setGuestName] = useState('');
   const [guestCNIC, setGuestCNIC] = useState('');
   const [guestMobile, setGuestMobile] = useState('');
@@ -29,8 +30,15 @@ const RoomBookDetailsContent = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectingCheckOut, setSelectingCheckOut] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const categories = ['Deluxe', 'Suite'];
+  
+  // Room pricing
+  const roomPrices = {
+    'Deluxe': 5000,
+    'Suite': 8000,
+  };
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -90,6 +98,84 @@ const RoomBookDetailsContent = () => {
     days.push(i);
   }
 
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    if (!checkInDate || !checkOutDate || selectedCategory === 'Please Select') {
+      return 0;
+    }
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+    const pricePerNight = roomPrices[selectedCategory as keyof typeof roomPrices] || 0;
+    return nights * pricePerNight;
+  };
+
+  // Validation functions
+  const validateGuestFields = () => {
+    if (bookingFor === 'Guest') {
+      if (!guestName.trim()) {
+        Alert.alert('Validation Error', 'Please enter guest name');
+        return false;
+      }
+      if (!guestCNIC.trim()) {
+        Alert.alert('Validation Error', 'Please enter guest CNIC');
+        return false;
+      }
+      if (!guestMobile.trim()) {
+        Alert.alert('Validation Error', 'Please enter guest mobile number');
+        return false;
+      }
+      // CNIC validation (basic format check)
+      const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+      if (!cnicRegex.test(guestCNIC)) {
+        Alert.alert('Validation Error', 'Please enter CNIC in correct format (12345-1234567-1)');
+        return false;
+      }
+      // Mobile validation (basic format check)
+      const mobileRegex = /^03\d{9}$/;
+      if (!mobileRegex.test(guestMobile)) {
+        Alert.alert('Validation Error', 'Please enter mobile number in correct format (03xxxxxxxxx)');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleBooking = () => {
+    // Validate required fields
+    if (selectedCategory === 'Please Select') {
+      Alert.alert('Validation Error', 'Please select a room category');
+      return;
+    }
+    if (!checkInDate || !checkOutDate) {
+      Alert.alert('Validation Error', 'Please select check-in and check-out dates');
+      return;
+    }
+    if (checkInDate >= checkOutDate) {
+      Alert.alert('Validation Error', 'Check-out date must be after check-in date');
+      return;
+    }
+    
+    // Validate guest fields if booking for guest
+    if (!validateGuestFields()) {
+      return;
+    }
+
+    // Create booking
+    const newBooking = {
+      id: String(Date.now()),
+      roomType: selectedCategory,
+      occupancy: bookingFor === 'Member' ? 'Member' : 'Guest',
+      dateRange: `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`,
+      status: 'Pending' as const,
+      guestName: bookingFor === 'Guest' ? guestName : undefined,
+      guestCNIC: bookingFor === 'Guest' ? guestCNIC : undefined,
+      guestMobile: bookingFor === 'Guest' ? guestMobile : undefined,
+      totalPrice: calculateTotalPrice(),
+    };
+    
+    DeviceEventEmitter.emit('roomBooked', newBooking);
+    setShowSuccessModal(true);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#D84315" />
@@ -108,9 +194,11 @@ const RoomBookDetailsContent = () => {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 }
+          { paddingBottom: insets.bottom + 120 }
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Room Category Dropdown */}
         <View style={styles.section}>
@@ -159,8 +247,8 @@ const RoomBookDetailsContent = () => {
 
               {/* Day names */}
               <View style={styles.dayNamesContainer}>
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-                  <Text key={day} style={styles.dayName}>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                  <Text key={`day-${index}`} style={styles.dayName}>
                     {day}
                   </Text>
                 ))}
@@ -286,25 +374,11 @@ const RoomBookDetailsContent = () => {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalAmount}>Rs 0</Text>
+          <Text style={styles.totalAmount}>Rs {calculateTotalPrice().toLocaleString()}</Text>
         </View>
         <TouchableOpacity
           style={styles.bookButton}
-          onPress={() => {
-            if (selectedCategory === 'Please Select' || !checkInDate || !checkOutDate) {
-              // minimal guard; in real app show toast/validation
-              return;
-            }
-            const newBooking = {
-              id: String(Date.now()),
-              roomType: selectedCategory,
-              occupancy: bookingFor === 'Member' ? 'Member' : 'Guest',
-              dateRange: `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`,
-              status: 'Pending' as const,
-            };
-            DeviceEventEmitter.emit('roomBooked', newBooking);
-            router.back();
-          }}
+          onPress={handleBooking}
         >
           <Text style={styles.bookButtonText}>Book Now</Text>
         </TouchableOpacity>
@@ -340,6 +414,59 @@ const RoomBookDetailsContent = () => {
             ))}
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModal}>
+            <View style={styles.successIconContainer}>
+              <Icon name="check-circle" size={60} color="#16A34A" />
+            </View>
+            <Text style={styles.successTitle}>Booking Successful!</Text>
+            <Text style={styles.successMessage}>
+              Your room booking has been submitted successfully. You will receive a confirmation shortly.
+            </Text>
+            <View style={styles.bookingDetails}>
+              <Text style={styles.bookingDetailText}>
+                <Text style={styles.bold}>Room Type:</Text> {selectedCategory}
+              </Text>
+              <Text style={styles.bookingDetailText}>
+                <Text style={styles.bold}>Duration:</Text> {formatDate(checkInDate)} - {formatDate(checkOutDate)}
+              </Text>
+              <Text style={styles.bookingDetailText}>
+                <Text style={styles.bold}>Total Amount:</Text> Rs {calculateTotalPrice().toLocaleString()}
+              </Text>
+              {bookingFor === 'Guest' && (
+                <>
+                  <Text style={styles.bookingDetailText}>
+                    <Text style={styles.bold}>Guest Name:</Text> {guestName}
+                  </Text>
+                  <Text style={styles.bookingDetailText}>
+                    <Text style={styles.bold}>Guest CNIC:</Text> {guestCNIC}
+                  </Text>
+                  <Text style={styles.bookingDetailText}>
+                    <Text style={styles.bold}>Guest Mobile:</Text> {guestMobile}
+                  </Text>
+                </>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => {
+                setShowSuccessModal(false);
+                router.back();
+              }}
+            >
+              <Text style={styles.successButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -385,9 +512,11 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     padding: 16,
+    flexGrow: 1,
   },
   section: {
     marginBottom: 20,
@@ -546,6 +675,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   totalRow: {
     flexDirection: 'row',
@@ -608,6 +742,61 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 15,
     color: '#333',
+  },
+  successModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  successIconContainer: {
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#16A34A',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  bookingDetails: {
+    width: '100%',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 20,
+  },
+  bookingDetailText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  bold: {
+    fontWeight: '600',
+    color: '#111827',
+  },
+  successButton: {
+    backgroundColor: '#16A34A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 

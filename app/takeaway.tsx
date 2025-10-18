@@ -104,7 +104,7 @@ export default function Takeaway() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.replace('/MemberDashboard')}
         >
           <Ionicons name="chevron-back" size={20} color="#D84315" />
         </TouchableOpacity>
