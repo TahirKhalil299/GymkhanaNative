@@ -97,36 +97,52 @@ export default function CartScreen() {
   const navigateBackToMenu = () => {
     const safeExistingItems = existingItems || [];
     const safeCartItems = cartItems || [];
-    // Merge duplicates by id to avoid duplicate rows when returning to menu
-    const map = new Map<number, SimpleCartItem>();
-    [...safeExistingItems, ...safeCartItems].forEach(it => {
-      const prev = map.get(it.id);
-      if (prev) {
-        map.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
-      } else {
-        map.set(it.id, { ...it });
-      }
-    });
-    const allItems = Array.from(map.values());
-    router.replace({
-      pathname: '/course_menu_item',
-      params: {
-        order_number: params.order_number ?? '',
-        member_id: params.member_id ?? '',
-        member_type: params.member_type ?? '',
-        pax: params.pax ?? '',
-        member_name: params.member_name ?? '',
-        table_no: params.table_no ?? '',
-        waiter_id: params.waiter_id ?? '',
-        waiter_name: params.waiter_name ?? '',
-        order_type: params.order_type ?? '',
-        cart_total: String(grandTotal),
-        cart_count: String(itemCount),
-        cart_items: JSON.stringify(allItems),
-        is_edit_mode: String(isEditMode),
-        restaurant_name: restaurantName,
-      }
-    });
+    
+    // In edit mode, keep items separate to avoid duplication
+    if (isEditMode) {
+      // Pass only new items (cartItems) to avoid duplication
+      const newItemsOnly = safeCartItems.filter(item => !item.isExisting);
+      router.replace({
+        pathname: '/course_menu_item',
+        params: {
+          order_number: params.order_number ?? '',
+          member_id: params.member_id ?? '',
+          member_type: params.member_type ?? '',
+          pax: params.pax ?? '',
+          member_name: params.member_name ?? '',
+          table_no: params.table_no ?? '',
+          waiter_id: params.waiter_id ?? '',
+          waiter_name: params.waiter_name ?? '',
+          order_type: params.order_type ?? '',
+          cart_total: String(grandTotal),
+          cart_count: String(itemCount),
+          cart_items: JSON.stringify([...safeExistingItems, ...newItemsOnly]),
+          is_edit_mode: String(isEditMode),
+          restaurant_name: restaurantName,
+        }
+      });
+    } else {
+      // In normal mode, pass all cart items
+      router.replace({
+        pathname: '/course_menu_item',
+        params: {
+          order_number: params.order_number ?? '',
+          member_id: params.member_id ?? '',
+          member_type: params.member_type ?? '',
+          pax: params.pax ?? '',
+          member_name: params.member_name ?? '',
+          table_no: params.table_no ?? '',
+          waiter_id: params.waiter_id ?? '',
+          waiter_name: params.waiter_name ?? '',
+          order_type: params.order_type ?? '',
+          cart_total: String(grandTotal),
+          cart_count: String(itemCount),
+          cart_items: JSON.stringify(safeCartItems),
+          is_edit_mode: String(isEditMode),
+          restaurant_name: restaurantName,
+        }
+      });
+    }
   };
 
   return (
@@ -262,8 +278,27 @@ export default function CartScreen() {
               let allItems: SimpleCartItem[];
               
               if (isEditMode) {
-                // Keep existing items as-is, and new items as-is (don't merge by ID)
-                allItems = [...safeExistingItems, ...safeCartItems];
+                // In edit mode, merge items by ID to avoid duplication
+                const itemMap = new Map<number, SimpleCartItem>();
+                
+                // Add existing items first
+                safeExistingItems.forEach(item => {
+                  itemMap.set(item.id, { ...item });
+                });
+                
+                // Add or update with new items
+                safeCartItems.forEach(item => {
+                  const existing = itemMap.get(item.id);
+                  if (existing) {
+                    // If item exists, update quantity (don't add, replace)
+                    itemMap.set(item.id, { ...item, isExisting: existing.isExisting });
+                  } else {
+                    // If new item, add it
+                    itemMap.set(item.id, { ...item });
+                  }
+                });
+                
+                allItems = Array.from(itemMap.values());
               } else {
                 // In normal mode, only use cart items to avoid duplication
                 // The existing items are already included in the cart items when they were first added

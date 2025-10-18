@@ -58,17 +58,23 @@ export default function CourseMenuScreen() {
   // Merge helper to avoid duplicate entries for same item id
   const mergeItems = (base: SimpleCartItem[], added: SimpleCartItem[]) => {
     const map = new Map<number, SimpleCartItem>();
+    
+    // Add base items first
     for (const it of base) {
       map.set(it.id, { ...it });
     }
+    
+    // Add or update with added items
     for (const it of added) {
       const prev = map.get(it.id);
       if (prev) {
-        map.set(it.id, { ...prev, quantity: prev.quantity + it.quantity, isExisting: prev.isExisting || it.isExisting });
+        // Always replace quantities to avoid duplication
+        map.set(it.id, { ...it, isExisting: prev.isExisting || it.isExisting });
       } else {
         map.set(it.id, { ...it });
       }
     }
+    
     return Array.from(map.values());
   };
   const initialItems: SimpleCartItem[] = useMemo(() => {
@@ -94,15 +100,29 @@ export default function CourseMenuScreen() {
   useEffect(() => {
     try {
       const parsed: SimpleCartItem[] = params.cart_items ? JSON.parse(String(params.cart_items)) : [];
-      // When navigating back from cart during edit, split items: keep existing in existingItems, load only new items into cartItems
-      const onlyNew = parsed.filter(i => !i.isExisting);
-      setCartItems(onlyNew);
-      const newCount = Number(params.cart_count ?? (onlyNew.reduce((s, i) => s + i.quantity, 0)));
-      const newTotal = Number(params.cart_total ?? (onlyNew.reduce((s, i) => s + i.price * i.quantity, 0)));
-      setCartCount(newCount);
-      setCartTotal(newTotal);
+      
+      if (isEditMode) {
+        // In edit mode, split items: keep existing in existingItems, load only new items into cartItems
+        const onlyNew = parsed.filter(i => !i.isExisting);
+        setCartItems(onlyNew);
+        
+        // Calculate totals based on only new items to avoid duplication
+        const newCount = onlyNew.reduce((s, i) => s + i.quantity, 0);
+        const newTotal = onlyNew.reduce((s, i) => s + i.price * i.quantity, 0);
+        setCartCount(newCount);
+        setCartTotal(newTotal);
+      } else {
+        // In normal mode, use all items as cart items
+        setCartItems(parsed);
+        
+        // Use the params values directly
+        const newCount = Number(params.cart_count ?? 0);
+        const newTotal = Number(params.cart_total ?? 0);
+        setCartCount(newCount);
+        setCartTotal(newTotal);
+      }
     } catch {}
-  }, [params.cart_items, params.cart_count, params.cart_total]);
+  }, [params.cart_items, params.cart_count, params.cart_total, isEditMode]);
 
   const addItem = (item: Item) => {
     setCartItems(prev => {
